@@ -1,12 +1,15 @@
 from fastapi import FastAPI
 from modules.auth import router as auth_router
+from modules.skill_gap import router as skills_router
+
 app=FastAPI(title="vedha_ai",version='1.0.0')
 
 app.include_router(auth_router,prefix='/api/auth',tags=['Auth'])
+app.include_router(skills_router, prefix="/api/skills", tags=["Skills"])
 
-@app.get('/')
+@app.get("/")
 def home():
-    return{"message":"vedha_AI is live","Status":"OK"}
+    return {"message": "Vedha AI is live!"}
 
 @app.get('/health')
 def health():
