@@ -1,10 +1,10 @@
-# utils/db.py — Vedha AI Database
-
 import sqlite3
+import os
 
-DB_PATH = "vedha_ai.db"
+DB_PATH = "data/vedha_ai.db"
 
 def get_connection():
+    os.makedirs("data", exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
@@ -18,6 +18,7 @@ def init_db():
             id            INTEGER PRIMARY KEY AUTOINCREMENT,
             name          TEXT NOT NULL,
             email         TEXT UNIQUE NOT NULL,
+            password      TEXT NOT NULL,
             goal          TEXT,
             skills        TEXT DEFAULT '[]',
             quiz_score    REAL DEFAULT 0,

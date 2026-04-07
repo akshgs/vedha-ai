@@ -5,7 +5,7 @@ import hashlib
 
 router=APIRouter()
 def hash_password(password:str)->str:
-    return hashlib.shap256(password.econde()).hexdiegst()
+    return hashlib.sha256(password.encode()).hexdigest()
 
 class RegisterRequest(BaseModel):
     name:str
@@ -13,8 +13,8 @@ class RegisterRequest(BaseModel):
     password:str
     goal:str='Student'
 
-@router.post('/resister')
-def register(request:RegisterRequest):
+@router.post("/register")
+def register(data: RegisterRequest):
     conn=get_connection()
     cur=conn.cursor()
     existing=cur.execute("SELECT * FROM students WHERE email=?",(data.email,)
@@ -23,7 +23,13 @@ def register(request:RegisterRequest):
         conn.close()
         raise HTTPException(status_code=400,detail="Email already registered")
 
-    cur.excecute("""INSERT INTO students (name,email,password,goal) VALUES (?,?,?,?)""",(data.name,data.email,hash_password(data.password),data.goal))
+    cur.execute("""INSERT INTO students 
+   (name, email, password, goal) 
+   VALUES (?, ?, ?, ?)""",
+   (data.name, data.email, 
+    hash_password(data.password), 
+    data.goal)
+)
     conn.commit()
     conn.close()
 
