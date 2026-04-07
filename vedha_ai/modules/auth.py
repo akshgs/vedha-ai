@@ -36,3 +36,29 @@ def register(data: RegisterRequest):
     return{"message":"Account created!",
            "name":data.name,
            "email":data.email}
+
+class LoginRequest(BaseModel):
+    email:str
+    password:str
+@router.post("/login")
+def login(data:LoginRequest):
+    conn=get_connection()
+    cur=conn.cursor()
+    user=cur.execute("SELECT * FROM students WHERE email=?",(data.email,)
+                     ).fetchone()
+    if not user:
+        conn.close()
+        raise HTTPException(status_code=400,detail="Email not found!")
+    if user['password']!=hash_password(data.password):
+        conn.close()
+        raise HTTPException(status_code=400,detail="Incorrect password!")
+    conn.close()
+    return{
+        "message":"login sucessful",
+        "user":{
+            "id":user['id'],
+            "name":user['name'],
+            "email":user['email'],
+            "goal":user['goal']
+        }
+    }
