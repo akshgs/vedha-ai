@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vedha AI — Career Platform</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        body {
+            background: #0f0f1a;
+            color: #ffffff;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: #1a1a2e;
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #7c6ef7;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: #7c6ef7;
+        }
+
+        .nav-links a {
+            color: #aaa;
+            text-decoration: none;
+            margin-left: 24px;
+            font-size: 14px;
+        }
+
+        .nav-links a:hover {
+            color: #7c6ef7;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 32px 16px;
+        }
+
+        .hero {
+            text-align: center;
+            padding: 60px 0 40px;
+        }
+
+        .hero h1 {
+            font-size: 48px;
+            font-weight: 800;
+            margin-bottom: 16px;
+        }
+
+        .hero h1 span {
+            color: #7c6ef7;
+        }
+
+        .hero p {
+            font-size: 18px;
+            color: #aaa;
+            margin-bottom: 32px;
+        }
+
+        .btn {
+            padding: 14px 32px;
+            border-radius: 8px;
+            border: none;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #7c6ef7;
+            color: white;
+            margin-right: 12px;
+        }
+
+        .btn-primary:hover {
+            background: #9b8ef9;
+            transform: translateY(-2px);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: #7c6ef7;
+            border: 2px solid #7c6ef7;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin: 40px 0;
+        }
+
+        .stat-card {
+            background: #1a1a2e;
+            border: 1px solid #2a2a4a;
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .stat-card .number {
+            font-size: 36px;
+            font-weight: 700;
+            color: #7c6ef7;
+        }
+
+        .stat-card .label {
+            font-size: 13px;
+            color: #aaa;
+            margin-top: 6px;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin: 40px 0;
+        }
+
+        .feature-card {
+            background: #1a1a2e;
+            border: 1px solid #2a2a4a;
+            border-radius: 12px;
+            padding: 28px;
+            transition: all 0.2s;
+        }
+
+        .feature-card:hover {
+            border-color: #7c6ef7;
+            transform: translateY(-4px);
+        }
+
+        .feature-icon {
+            font-size: 32px;
+            margin-bottom: 16px;
+        }
+
+        .feature-card h3 {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+
+        .feature-card p {
+            font-size: 14px;
+            color: #aaa;
+            line-height: 1.6;
+        }
+
+        .section-title {
+            font-size: 28px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .section-sub {
+            text-align: center;
+            color: #aaa;
+            margin-bottom: 32px;
+            font-size: 15px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 32px;
+            color: #555;
+            border-top: 1px solid #2a2a4a;
+            margin-top: 60px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="logo">⚡ Vedha AI</div>
+        <div class="nav-links">
+            <a href="#features">Features</a>
+            <a href="#stats">Stats</a>
+            <a href="http://localhost:8000/docs">API Docs</a>
+        </div>
+    </nav>
+
+    <div class="container">
+
+        <!-- Hero Section -->
+        <div class="hero">
+            <h1>Your Career<br><span>Intelligence Platform</span></h1>
+            <p>AI-powered skill analysis, mentor chat, and opportunity matching<br>
+               built for students in Kerala and across India</p>
+            <button class="btn btn-primary" onclick="checkAPI()">
+                🚀 Check API Status
+            </button>
+            <button class="btn btn-outline" 
+                    onclick="window.open('http://localhost:8000/docs')">
+                📄 View API Docs
+            </button>
+        </div>
+
+        <!-- Stats -->
+        <div id="stats">
+            <div class="section-title">Platform Stats</div>
+            <div class="section-sub">Real-time data from Vedha AI API</div>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="number" id="stat-status">⏳</div>
+                    <div class="label">API Status</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number" id="stat-opportunities">6</div>
+                    <div class="label">Opportunities</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number">8</div>
+                    <div class="label">API Endpoints</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number">100%</div>
+                    <div class="label">Free to Use</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Features -->
+        <div id="features">
+            <div class="section-title">What Vedha AI Does</div>
+            <div class="section-sub">
+                From your notebook idea to a real platform
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🎯</div>
+                    <h3>Skill Gap Analysis</h3>
+                    <p>Compare your skills with target job roles. 
+                       Get a score and see exactly what you're missing.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🤖</div>
+                    <h3>AI Mentor Chat</h3>
+                    <p>Chat with an AI mentor that knows your profile. 
+                       Get personalised career guidance powered by Claude AI.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🏆</div>
+                    <h3>Leaderboard</h3>
+                    <p>Compete with other students. 
+                       Build skills, take quizzes, climb the rankings.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💼</div>
+                    <h3>Opportunity Matching</h3>
+                    <p>Find internships and scholarships matched to your skills. 
+                       KSUM, TCS, IIT and more.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Progress Tracking</h3>
+                    <p>Track your skill growth over time. 
+                       See how close you are to your dream job.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🌟</div>
+                    <h3>Kerala First</h3>
+                    <p>Built by a Kerala student for Kerala students. 
+                       KSUM grants, UST Global, Infosys Trivandrum included.</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <footer>
+        <p>⚡ Vedha AI — Built by Akash | 
+           Powered by FastAPI + Claude AI | 
+           Kerala, India 2026</p>
+    </footer>
+    
+    <script>
+        // Check if API is running
+        async function checkAPI() {
+            const statusEl = document.getElementById('stat-status');
+            
+            try {
+                const response = await fetch('http://localhost:8000/');
+                const data     = await response.json();
+                
+                if (data.message) {
+                    statusEl.textContent = '✅ Live';
+                    statusEl.style.color = '#2dd4a0';
+                    alert('✅ Vedha AI API is running!\n\n' + 
+                          JSON.stringify(data, null, 2));
+                }
+            } catch (error) {
+                statusEl.textContent = '❌ Off';
+                statusEl.style.color = '#f96b6b';
+                alert('❌ API is not running!\n\nStart it with:\nuvicorn app:app --reload');
+            }
+        }
+
+        // Auto check on page load
+        window.onload = function() {
+            checkAPI();
+        }
+    </script>
+
+</body>
+</html>
+
+
+
