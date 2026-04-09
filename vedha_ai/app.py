@@ -1,11 +1,13 @@
 from fastapi import FastAPI
-from modules.auth import router as auth_router
+from modules.auth      import router as auth_router
 from modules.skill_gap import router as skills_router
+from modules.chatbot   import router as chat_router
 
-app=FastAPI(title="vedha_ai",version='1.0.0')
+app = FastAPI(title="vedha_ai", version='1.0.0')
 
-app.include_router(auth_router,prefix='/api/auth',tags=['Auth'])
+app.include_router(auth_router, prefix='/api/auth', tags=['Auth'])
 app.include_router(skills_router, prefix="/api/skills", tags=["Skills"])
+app.include_router(chat_router, prefix="/api/chat", tags=["Chat"])
 
 @app.get("/")
 def home():
@@ -13,4 +15,4 @@ def home():
 
 @app.get('/health')
 def health():
-    return{"message":"vedha_AI ","version":"1.0.0"}
+    return {"message": "vedha_AI", "version": "1.0.0"}
