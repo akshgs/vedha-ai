@@ -1,11 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from modules.auth         import router as auth_router
-from modules.skill_gap    import router as skills_router
-from modules.chatbot      import router as chat_router
-from modules.leaderboard  import router as leaderboard_router
-from modules.mentor_match import router as opportunities_router
-from modules.quiz         import router as quiz_router
+from modules.auth            import router as auth_router
+from modules.skill_gap       import router as skills_router
+from modules.chatbot         import router as chat_router
+from modules.leaderboard     import router as leaderboard_router
+from modules.mentor_match    import router as opportunities_router
+from modules.quiz            import router as quiz_router
+from modules.resume_scanner  import router as resume_router
 
 app = FastAPI(title="Vedha AI", version="1.0.0")
 
@@ -22,6 +23,7 @@ app.include_router(chat_router,          prefix="/api/chat",          tags=["Cha
 app.include_router(leaderboard_router,   prefix="/api/leaderboard",   tags=["Leaderboard"])
 app.include_router(opportunities_router, prefix="/api/opportunities",  tags=["Opportunities"])
 app.include_router(quiz_router,          prefix="/api/quiz",          tags=["Quiz"])
+app.include_router(resume_router,        prefix="/api/resume",        tags=["Resume"])
 
 @app.get("/")
 def home():
