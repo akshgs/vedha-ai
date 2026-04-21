@@ -1,0 +1,12 @@
+﻿CAREER_KNOWLEDGE = [
+    "To become a Data Scientist in India, learn Python, Pandas, NumPy, Scikit-learn, and Statistics. Companies like TCS, Infosys, Wipro hire Data Scientists.",
+    "Machine Learning Engineer skills: Python, TensorFlow, PyTorch, Scikit-learn, Docker, REST APIs, Git, Deep Learning. Salary 6-15 LPA for freshers.",
+    "To crack ML interviews, practice LeetCode, revise Linear Regression, Logistic Regression, Decision Trees, Random Forest, SVM, Neural Networks.",
+    "KSUM Kerala Startup Mission offers grants and internships for Kerala students. Apply at startupmission.kerala.gov.in.",
+    "Computer Vision jobs: learn OpenCV, YOLO, DeepFace, CNN, object detection. UST Global Kochi and IIT Madras labs hire CV engineers.",
+    "NLP skills 2026: spaCy, HuggingFace Transformers, BERT, sentence-transformers, LangChain, RAG pipelines. Freshworks and Zoho hire NLP engineers.",
+    "GenAI Engineer skills: LLM APIs, RAG with FAISS, LangChain, prompt engineering, vector databases. Highest paying role in 2026 India tech.",
+    "Resume tips: Add GitHub link, mention exact model names like ResNet BERT YOLOv8, show metrics like accuracy 94 percent F1-score 0.91.",
+    "Best free ML courses 2026: Andrew Ng Coursera ML, fast.ai Deep Learning, HuggingFace NLP course, Google ML crash course.",
+    "Internshala LinkedIn and Naukri.com are top job portals in India. Apply to minimum 20 companies per week.",
+]

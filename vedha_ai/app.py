@@ -1,14 +1,28 @@
-from fastapi import FastAPI
+﻿from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from modules.auth            import router as auth_router
-from modules.skill_gap       import router as skills_router
-from modules.chatbot         import router as chat_router
-from modules.leaderboard     import router as leaderboard_router
-from modules.mentor_match    import router as opportunities_router
-from modules.quiz            import router as quiz_router
-from modules.resume_scanner  import router as resume_router
+from contextlib import asynccontextmanager
+from modules.auth import router as auth_router
+from modules.skill_gap import router as skills_router
+from modules.chatbot import router as chat_router
+from modules.leaderboard import router as leaderboard_router
+from modules.mentor_match import router as opportunities_router
+from modules.quiz import router as quiz_router
+from modules.resume_scanner import router as resume_router
+from modules.knowledge import router as knowledge_router
+from utils.vector_store import build_index, load_from_disk
+from data.knowledge_base import CAREER_KNOWLEDGE
 
-app = FastAPI(title="Vedha AI", version="1.0.0")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print("Starting Vedha AI...")
+    loaded = load_from_disk()
+    if not loaded:
+        print("First run - building knowledge base...")
+        build_index(CAREER_KNOWLEDGE)
+    print("RAG system ready!")
+    yield
+
+app = FastAPI(title="Vedha AI", version="2.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -24,7 +38,8 @@ app.include_router(leaderboard_router,   prefix="/api/leaderboard",   tags=["Lea
 app.include_router(opportunities_router, prefix="/api/opportunities",  tags=["Opportunities"])
 app.include_router(quiz_router,          prefix="/api/quiz",          tags=["Quiz"])
 app.include_router(resume_router,        prefix="/api/resume",        tags=["Resume"])
+app.include_router(knowledge_router,     prefix="/api/knowledge",     tags=["Knowledge"])
 
 @app.get("/")
 def home():
-    return {"message": "Vedha AI is live!"}
+    return {"message": "Vedha AI v2.0 - RAG Powered!"}
