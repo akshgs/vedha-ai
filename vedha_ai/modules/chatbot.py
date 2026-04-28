@@ -1,20 +1,47 @@
 from fastapi import APIRouter, HTTPException
+from langchain_ollama import OllamaLLM
+from langchain_core.prompts import PromptTemplate
+from langchain_core.output_parsers import StrOutputParser
 from pydantic import BaseModel
 from utils.db import get_connection
-import os
-import httpx
 
 router = APIRouter()
 
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
-CLAUDE_MODEL      = "claude-sonnet-4-20250514"
+# Llama AI setup
+llm = OllamaLLM(
+    model="llama3.2",
+    temperature=0.7
+)
 
+# Chat Prompt
+chat_prompt = PromptTemplate(
+    input_variables=["student_context", "chat_history", "question"],
+    template="""You are Vedha AI, a career mentor for students in Kerala, India.
+
+Student Profile:
+{student_context}
+
+Previous Conversation:
+{chat_history}
+
+Student Question: {question}
+
+Give practical, encouraging advice in 3-4 sentences.
+Focus on Indian job market — mention KSUM, TCS, Infosys when relevant.
+Always reply in English only.
+Keep response clear and simple."""
+)
+
+# Chain
+chat_chain = chat_prompt | llm | StrOutputParser()
+
+# Pydantic model
 class ChatRequest(BaseModel):
     student_id: int
-    message:    str
+    message: str
 
 def get_student_context(student_id: int) -> str:
-    conn    = get_connection()
+    conn = get_connection()
     student = conn.execute(
         "SELECT * FROM students WHERE id = ?",
         (student_id,)
@@ -24,12 +51,33 @@ def get_student_context(student_id: int) -> str:
     if not student:
         return "A student using Vedha AI platform."
 
-    return f"""Student profile:
-- Name: {student['name']}
-- Goal: {student['goal']}
-- Skills: {student['skills']}
-- Quiz Score: {student['quiz_score']}%
-"""
+    return f"""Name: {student['name']}
+Goal: {student['goal']}
+Skills: {student['skills']}
+Quiz Score: {student['quiz_score']}%"""
+
+
+def get_chat_history(student_id: int) -> str:
+    conn = get_connection()
+    history = conn.execute(
+        """SELECT role, message FROM chat_history
+           WHERE student_id = ?
+           ORDER BY created_at DESC
+           LIMIT 6""",
+        (student_id,)
+    ).fetchall()
+    conn.close()
+
+    if not history:
+        return "No previous conversation."
+
+    lines = []
+    for row in reversed(history):
+        role = "Student" if row['role'] == "user" else "Vedha AI"
+        lines.append(f"{role}: {row['message']}")
+
+    return "\n".join(lines)
+
 
 def save_message(student_id: int, role: str, message: str):
     conn = get_connection()
@@ -42,57 +90,56 @@ def save_message(student_id: int, role: str, message: str):
     conn.commit()
     conn.close()
 
-def get_fallback_response(message: str) -> str:
-    msg = message.lower()
-    if any(w in msg for w in ["skill", "learn", "next"]):
-        return "Focus on Python and ML first — they are the foundation. Build 2-3 real projects and put them on GitHub!"
-    if any(w in msg for w in ["internship", "job", "apply"]):
-        return "Check KSUM Kerala, LinkedIn, Internshala. Apply to 10+ places. Your data science background is a real advantage!"
-    if any(w in msg for w in ["interview", "prepare"]):
-        return "Practice DSA on LeetCode, revise ML concepts, and have 2 good projects ready to talk about!"
-    return "Stay consistent — 2 hours of coding every day compounds faster than you think!"
-
 @router.post("/chat")
 async def chat(data: ChatRequest):
-    if not data.message.strip():
-        raise HTTPException(status_code=400, detail="Message cannot be empty!")
 
+    # Step 1: Empty check
+    if not data.message.strip():
+        raise HTTPException(
+            status_code=400,
+            detail="Message cannot be empty!"
+        )
+
+    # Step 2: Save user message
     save_message(data.student_id, "user", data.message)
 
-    if not ANTHROPIC_API_KEY:
-        reply = get_fallback_response(data.message)
-        save_message(data.student_id, "assistant", reply)
-        return {"reply": reply, "mode": "offline"}
+    # Step 3: Get context
+    student_context = get_student_context(data.student_id)
+    chat_history = get_chat_history(data.student_id)
 
+    # Step 4: Llama-നോട് ചോദിക്കുന്നു
     try:
-        student_context = get_student_context(data.student_id)
-
-        async with httpx.AsyncClient(timeout=30) as client:
-            response = await client.post(
-                "https://api.anthropic.com/v1/messages",
-                headers={
-                    "x-api-key":         ANTHROPIC_API_KEY,
-                    "anthropic-version": "2023-06-01",
-                    "content-type":      "application/json"
-                },
-                json={
-                    "model":      CLAUDE_MODEL,
-                    "max_tokens": 400,
-                    "system": f"""You are Vedha AI — a career mentor for students in India.
-{student_context}
-Give practical, encouraging advice in 3-4 sentences.
-Focus on Indian job market — mention KSUM, TCS, Infosys when relevant.""",
-                    "messages": [
-                        {"role": "user", "content": data.message}
-                    ]
-                }
-            )
-
-        result = response.json()
-        reply  = result["content"][0]["text"]
+        reply = await chat_chain.ainvoke({
+            "student_context": student_context,
+            "chat_history": chat_history,
+            "question": data.message
+        })
 
     except Exception as e:
-        reply = get_fallback_response(data.message)
+        reply = f"Error: {str(e)}"
 
+    # Step 5: Save and return
     save_message(data.student_id, "assistant", reply)
-    return {"reply": reply, "mode": "ai"}
+    return {
+        "reply": reply,
+        "mode": "llama3.2",
+        "student_id": data.student_id
+    }
+
+
+@router.get("/history/{student_id}")
+async def get_history(student_id: int):
+    conn = get_connection()
+    history = conn.execute(
+        """SELECT role, message, created_at
+           FROM chat_history
+           WHERE student_id = ?
+           ORDER BY created_at ASC""",
+        (student_id,)
+    ).fetchall()
+    conn.close()
+
+    return {
+        "student_id": student_id,
+        "history": [dict(row) for row in history]
+    }
