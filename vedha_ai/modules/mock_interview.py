@@ -10,7 +10,6 @@ from langchain_core.output_parsers import StrOutputParser
 
 router = APIRouter()
 
-llm = OllamaLLM(model="llama3.2", temperature=0.7)
 
 
 # -------------------------------------------------------
@@ -78,12 +77,15 @@ class InterviewFeedback(BaseModel):
 # -------------------------------------------------------
 # Helper: call ollma
 # -------------------------------------------------------
-async def call_llama(system_prompt: str, user_message: str) -> str:
+async def call_llama(system_prompt: str, user_message: str, max_tokens: int = 500) -> str:
+    # Create Ollama instance with correct max_tokens (num_predict in Ollama)
+    llm_instance = OllamaLLM(model="llama3.2", temperature=0.7, num_predict=max_tokens)
+    
     prompt = PromptTemplate(
         input_variables=["system", "user"],
         template="{system}\n\n{user}"
     )
-    chain = prompt | llm | StrOutputParser()
+    chain = prompt | llm_instance | StrOutputParser()
     
     result = await chain.ainvoke({
         "system": system_prompt,
