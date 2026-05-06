@@ -7,9 +7,6 @@ from datetime import datetime
 
 router = APIRouter()
 
-llm=OllamaLLM(model="llama3.2", temperature=0.7)
-router = APIRouter()
-
 # Llama AI setup
 llm = OllamaLLM(
     model="llama3.2",

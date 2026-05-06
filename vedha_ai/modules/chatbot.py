@@ -1,15 +1,21 @@
+import os
+from dotenv import load_dotenv
 from fastapi import APIRouter, HTTPException
-from langchain_ollama import OllamaLLM
+from langchain_groq import ChatGroq
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from pydantic import BaseModel
 from utils.db import get_connection
+load_dotenv()
+
+
 
 router = APIRouter()
 
 # Llama AI setup
-llm = OllamaLLM(
-    model="llama3.2",
+llm = ChatGroq(
+    model="llama-3.1-8b-instant",
+    groq_api_key=os.getenv("GROQ_API_KEY"),
     temperature=0.7
 )
 
@@ -122,7 +128,7 @@ async def chat(data: ChatRequest):
     save_message(data.student_id, "assistant", reply)
     return {
         "reply": reply,
-        "mode": "llama3.2",
+        "mode": "llama-3.1-8b-instant",
         "student_id": data.student_id
     }
 
