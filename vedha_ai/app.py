@@ -10,10 +10,13 @@ from modules.quiz import router as quiz_router
 from modules.resume_scanner import router as resume_router
 from modules.knowledge import router as knowledge_router
 from modules.trend_tracker import router as trends_router
-from modules.mock_interview import router as interview_router
+from modules.video_interview import router as interview_router
 from utils.vector_store import build_index, load_from_disk
 from data.knowledge_base import CAREER_KNOWLEDGE
 from modules.leetcode import router as leetcode_router
+
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("Starting Vedha AI...")
