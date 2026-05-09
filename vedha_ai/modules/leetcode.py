@@ -1,14 +1,22 @@
 from fastapi import APIRouter, HTTPException
-from langchain_ollama import OllamaLLM
+import os
+from dotenv import load_dotenv
+from langchain_groq import ChatGroq
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from pydantic import BaseModel
 from typing import Optional
 from utils.db import get_connection
 
+load_dotenv()
+
 router = APIRouter()
 
-llm = OllamaLLM(model="llama3.2", temperature=0.7)
+llm = ChatGroq(
+    model="llama-3.1-8b-instant",
+    groq_api_key=os.getenv("GROQ_API_KEY"),
+    temperature=0.7
+)
 
 # ─── All IT Tracks ────────────────────────────────
 IT_TRACKS = {
