@@ -14,6 +14,7 @@ from modules.video_interview import router as interview_router
 from utils.vector_store import build_index, load_from_disk
 from data.knowledge_base import CAREER_KNOWLEDGE
 from modules.leetcode import router as leetcode_router
+from modules.predictit_skill import router as predict_router
 
 
 
@@ -47,6 +48,11 @@ app.include_router(knowledge_router,     prefix="/api/knowledge",     tags=["Kno
 app.include_router(trends_router,        prefix="/api/trends",        tags=["Trends"])
 app.include_router(interview_router,     prefix="/api/interview",     tags=["Interview"])
 app.include_router(leetcode_router,      prefix="/api/leetcode",      tags=["LeetCode"])
+app.include_router(predict_router, prefix="/api/predict", tags=["ML Predictions"])
+
+
+
+
 @app.get("/")
 def home():
     return {"message": "Vedha AI v3.0 - Free & Open Source!"}

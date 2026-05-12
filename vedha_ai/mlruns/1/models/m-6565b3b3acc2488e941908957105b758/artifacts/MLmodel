@@ -1,0 +1,23 @@
+artifact_path: file:D:/DSML/Vedha ai/vedha_ai/mlruns/1/models/m-6565b3b3acc2488e941908957105b758/artifacts
+flavors:
+  python_function:
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.sklearn
+    model_path: model.pkl
+    predict_fn: predict
+    python_version: 3.12.8
+  sklearn:
+    code: null
+    pickled_model: model.pkl
+    serialization_format: cloudpickle
+    sklearn_version: 1.8.0
+    skops_trusted_types: null
+mlflow_version: 3.12.0
+model_id: m-6565b3b3acc2488e941908957105b758
+model_size_bytes: 82411
+model_uuid: m-6565b3b3acc2488e941908957105b758
+prompts: null
+run_id: a5fc46c6cfc04702a53ca0eba7359687
+utc_time_created: '2026-05-12 09:19:33.350571'

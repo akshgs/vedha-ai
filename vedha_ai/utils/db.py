@@ -1,13 +1,15 @@
 import sqlite3
 import os
+from config.settings import DATABASE_URL  
 
-DB_PATH = "data/vedha_ai.db"
 
 def get_connection():
-    os.makedirs("data", exist_ok=True)
-    conn = sqlite3.connect(DB_PATH)
+    
+    os.makedirs(os.path.dirname(DATABASE_URL), exist_ok=True)
+    conn = sqlite3.connect(DATABASE_URL)
     conn.row_factory = sqlite3.Row
     return conn
+
 
 def init_db():
     conn = get_connection()
@@ -51,6 +53,20 @@ def init_db():
         )
     """)
 
+   
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS leetcode_history (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            student_id  INTEGER,
+            track       TEXT,
+            topic       TEXT,
+            problem     TEXT,
+            hint_level  INTEGER,
+            hint        TEXT,
+            created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
     conn.commit()
     conn.close()
-    print("✅ Database ready!")
+    print("Database ready!")
