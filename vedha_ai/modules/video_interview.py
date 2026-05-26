@@ -11,8 +11,6 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from dotenv import load_dotenv
 
-# ✅ FIX: mp.solutions മാറ്റി direct import ചെയ്യുന്നു
-# Python 3.12 + mediapipe 0.10.x-ൽ mp.solutions work ചെയ്യില്ല
 from mediapipe.python.solutions import face_mesh as mp_face_mesh
 from mediapipe.python.solutions import pose as mp_pose
 from mediapipe.python.solutions import drawing_utils as mp_drawing
