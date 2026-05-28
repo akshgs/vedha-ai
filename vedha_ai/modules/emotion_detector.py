@@ -3,23 +3,19 @@
 # ═══════════════════════════════════════════════
 
 import cv2
-# OpenCV — video frames extract ചെയ്യാൻ
-# cv2 = Computer Vision 2
+
 
 import os
-# File delete, path operations
+
 
 import tempfile
-# Upload ആകുന്ന video temporarily save ചെയ്യാൻ
+
 
 import numpy as np
-# Images are number arrays — numpy handles them
-# Example: 640x480 image = 640x480x3 array (RGB values)
+
 
 from fer import FER
-# FER = Facial Expression Recognition library
-# FER2013 dataset-ൽ trained CNN model — FREE, open source
-# Automatically detects face + predicts emotion
+
 
 from collections import Counter
 # Count items in a list
