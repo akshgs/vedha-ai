@@ -6,19 +6,18 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from pydantic import BaseModel
 from typing import Optional
+from sqlalchemy import text
 from utils.db import get_connection
 
 load_dotenv()
-
 router = APIRouter()
 
 llm = ChatGroq(
-    model="llama-3.1-8b-instant",
+    model="llama-3.3-70b-versatile",
     groq_api_key=os.getenv("GROQ_API_KEY"),
     temperature=0.7
 )
 
-# ─── All IT Tracks ────────────────────────────────
 IT_TRACKS = {
     "Python & DSA": [
         "Arrays & Lists", "Strings", "Recursion",
@@ -76,35 +75,29 @@ IT_TRACKS = {
     ]
 }
 
-# ─── Pydantic Models ──────────────────────────────
 class HintRequest(BaseModel):
     student_id: int
-    track: str
-    topic: str
-    problem: str
+    track:      str
+    topic:      str
+    problem:    str
     hint_level: int = 1
-    code: Optional[str] = None
+    code:       Optional[str] = None
 
 class PracticeRequest(BaseModel):
     student_id: int
-    track: str
-    topic: str
+    track:      str
+    topic:      str
     difficulty: str = "Intermediate"
 
-# ─── AI Functions ─────────────────────────────────
-async def get_hint(problem: str, hint_level: int, 
+async def get_hint(problem: str, hint_level: int,
                    track: str, code: Optional[str]) -> str:
-    
     hint_instructions = {
         1: "Give ONE small hint only. No solution. Just point toward the right direction.",
         2: "Explain the approach and algorithm. No complete code.",
         3: "Give complete step-by-step solution with explanation."
     }
-    
-    instruction = hint_instructions.get(hint_level, hint_instructions[1])
-    
+    instruction  = hint_instructions.get(hint_level, hint_instructions[1])
     code_section = f"\nStudent's current code:\n{code}" if code else ""
-    
     prompt = PromptTemplate(
         input_variables=["track", "problem", "code", "instruction"],
         template="""You are a coding mentor helping a {track} student.
@@ -116,27 +109,20 @@ Instructions: {instruction}
 
 Be encouraging and educational."""
     )
-    
     chain = prompt | llm | StrOutputParser()
-    
-    result = await chain.ainvoke({
-        "track": track,
-        "problem": problem,
-        "code": code_section,
-        "instruction": instruction
+    return await chain.ainvoke({
+        "track": track, "problem": problem,
+        "code": code_section, "instruction": instruction
     })
-    
-    return result
 
-
-async def generate_practice_problem(track: str, topic: str, 
+async def generate_practice_problem(track: str, topic: str,
                                      difficulty: str) -> str:
     prompt = PromptTemplate(
         input_variables=["track", "topic", "difficulty"],
         template="""You are a coding instructor creating a practice problem.
 
 Track: {track}
-Topic: {topic}  
+Topic: {topic}
 Difficulty: {difficulty}
 
 Create ONE clear practice problem with:
@@ -146,113 +132,52 @@ Create ONE clear practice problem with:
 
 Keep it practical and relevant for Indian IT interviews."""
     )
-    
     chain = prompt | llm | StrOutputParser()
-    
-    result = await chain.ainvoke({
-        "track": track,
-        "topic": topic,
-        "difficulty": difficulty
-    })
-    
-    return result
-
-
-# ─── Endpoints ────────────────────────────────────
+    return await chain.ainvoke({"track": track, "topic": topic, "difficulty": difficulty})
 
 @router.get("/tracks")
 def get_tracks():
-    return {
-        "tracks": list(IT_TRACKS.keys()),
-        "total": len(IT_TRACKS),
-        "message": "Choose a track to start practicing!"
-    }
-
+    return {"tracks": list(IT_TRACKS.keys()), "total": len(IT_TRACKS),
+            "message": "Choose a track to start practicing!"}
 
 @router.get("/topics/{track}")
 def get_topics(track: str):
     topics = IT_TRACKS.get(track)
     if not topics:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Track '{track}' not found!"
-        )
-    return {
-        "track": track,
-        "topics": topics,
-        "total": len(topics)
-    }
-
+        raise HTTPException(status_code=400, detail=f"Track '{track}' not found!")
+    return {"track": track, "topics": topics, "total": len(topics)}
 
 @router.post("/practice")
 async def get_practice_problem(data: PracticeRequest):
     if data.track not in IT_TRACKS:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Track '{data.track}' not found!"
-        )
-
-    topics = IT_TRACKS[data.track]
-    if data.topic not in topics:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Topic '{data.topic}' not found!"
-        )
-
+        raise HTTPException(status_code=400, detail=f"Track '{data.track}' not found!")
+    if data.topic not in IT_TRACKS[data.track]:
+        raise HTTPException(status_code=400, detail=f"Topic '{data.topic}' not found!")
     try:
-        problem = await generate_practice_problem(
-            data.track,
-            data.topic,
-            data.difficulty
-        )
+        problem = await generate_practice_problem(data.track, data.topic, data.difficulty)
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"AI error: {str(e)}"
-        )
-
-    return {
-        "track": data.track,
-        "topic": data.topic,
-        "difficulty": data.difficulty,
-        "problem": problem,
-        "message": "Use /leetcode/hint to get hints!"
-    }
-
+        raise HTTPException(status_code=500, detail=f"AI error: {str(e)}")
+    return {"track": data.track, "topic": data.topic,
+            "difficulty": data.difficulty, "problem": problem,
+            "message": "Use /leetcode/hint to get hints!"}
 
 @router.post("/hint")
 async def get_problem_hint(data: HintRequest):
     if not data.problem.strip():
-        raise HTTPException(
-            status_code=400,
-            detail="Problem cannot be empty!"
-        )
-
+        raise HTTPException(status_code=400, detail="Problem cannot be empty!")
     if data.hint_level not in [1, 2, 3]:
-        raise HTTPException(
-            status_code=400,
-            detail="Hint level must be 1, 2, or 3!"
-        )
-
+        raise HTTPException(status_code=400, detail="Hint level must be 1, 2, or 3!")
     try:
-        hint = await get_hint(
-            data.problem,
-            data.hint_level,
-            data.track,
-            data.code
-        )
+        hint = await get_hint(data.problem, data.hint_level, data.track, data.code)
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"AI error: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"AI error: {str(e)}")
 
-    # Save to DB
+    # Save to DB — PostgreSQL compatible
     try:
-        conn = get_connection()
-        conn.execute("""
+        session = get_connection()
+        session.execute(text("""
             CREATE TABLE IF NOT EXISTS leetcode_history (
-                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                id          SERIAL PRIMARY KEY,
                 student_id  INTEGER,
                 track       TEXT,
                 topic       TEXT,
@@ -261,52 +186,46 @@ async def get_problem_hint(data: HintRequest):
                 hint        TEXT,
                 created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        """)
-        conn.execute("""
+        """))
+        session.execute(text("""
             INSERT INTO leetcode_history
             (student_id, track, topic, problem, hint_level, hint)
-            VALUES (?, ?, ?, ?, ?, ?)
-        """, (
-            data.student_id,
-            data.track,
-            data.topic,
-            data.problem[:200],
-            data.hint_level,
-            hint[:500]
-        ))
-        conn.commit()
-        conn.close()
+            VALUES (:sid, :track, :topic, :problem, :hl, :hint)
+        """), {
+            "sid": data.student_id, "track": data.track,
+            "topic": data.topic, "problem": data.problem[:200],
+            "hl": data.hint_level, "hint": hint[:500]
+        })
+        session.commit()
+        session.close()
     except Exception:
         pass
 
     return {
-        "track": data.track,
-        "topic": data.topic,
-        "hint_level": data.hint_level,
-        "hint": hint,
+        "track": data.track, "topic": data.topic,
+        "hint_level": data.hint_level, "hint": hint,
         "next_hint": data.hint_level + 1 if data.hint_level < 3 else None,
         "message": "Need more help? Increase hint_level!"
     }
 
-
 @router.get("/history/{student_id}")
 def get_history(student_id: int):
-    conn = get_connection()
+    session = get_connection()
     try:
-        rows = conn.execute("""
+        rows = session.execute(text("""
             SELECT track, topic, hint_level, created_at
             FROM leetcode_history
-            WHERE student_id = ?
+            WHERE student_id = :id
             ORDER BY created_at DESC
             LIMIT 20
-        """, (student_id,)).fetchall()
+        """), {"id": student_id}).fetchall()
+        return {
+            "student_id": student_id, "total": len(rows),
+            "history": [{"track": r.track, "topic": r.topic,
+                         "hint_level": r.hint_level, "created_at": str(r.created_at)}
+                        for r in rows]
+        }
     except Exception:
         return {"history": [], "message": "No history yet!"}
     finally:
-        conn.close()
-
-    return {
-        "student_id": student_id,
-        "total": len(rows),
-        "history": [dict(r) for r in rows]
-    }
+        session.close()

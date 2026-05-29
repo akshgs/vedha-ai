@@ -4,3 +4,6 @@ __pycache__/
 *.pyc 
 data/*.db 
 *.db
+mlruns/
+models/*.pkl
+data/faiss.index

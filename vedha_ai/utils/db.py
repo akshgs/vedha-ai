@@ -1,72 +1,70 @@
-import sqlite3
+# utils/db.py — Updated for PostgreSQL
 import os
-from config.settings import DATABASE_URL  
+from sqlalchemy import create_engine, text, Column, Integer, String, Float, DateTime, Text
+from sqlalchemy.orm import sessionmaker, DeclarativeBase
+from datetime import datetime
+from dotenv import load_dotenv
 
+load_dotenv()
+
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./vedha_ai.db")
+
+if DATABASE_URL.startswith("postgresql"):
+    engine = create_engine(
+        DATABASE_URL,
+        pool_size=10,
+        max_overflow=20,
+        pool_pre_ping=True,
+        echo=False
+    )
+else:
+    engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+class Base(DeclarativeBase):
+    pass
+
+# ─── Models ───────────────────────────────────────
+class Student(Base):
+    __tablename__ = "students"
+    id         = Column(Integer, primary_key=True, index=True)
+    name       = Column(String(100), nullable=False)
+    email      = Column(String(150), unique=True, index=True)
+    password   = Column(String(255), nullable=False)
+    goal       = Column(String(200))
+    skills     = Column(Text, default="[]")
+    quiz_score = Column(Float, default=0.0)
+    role       = Column(String(20), default="student")
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+class ChatHistory(Base):
+    __tablename__ = "chat_history"
+    id         = Column(Integer, primary_key=True, index=True)
+    student_id = Column(Integer, index=True)
+    role       = Column(String(20))
+    message    = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+class QuizResult(Base):
+    __tablename__ = "quiz_results"
+    id         = Column(Integer, primary_key=True, index=True)
+    student_id = Column(Integer, index=True)
+    topic      = Column(String(100))
+    score      = Column(Float)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+# ─── Helpers ──────────────────────────────────────
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 def get_connection():
-    
-    os.makedirs(os.path.dirname(DATABASE_URL), exist_ok=True)
-    conn = sqlite3.connect(DATABASE_URL)
-    conn.row_factory = sqlite3.Row
-    return conn
-
+    return SessionLocal()
 
 def init_db():
-    conn = get_connection()
-    c = conn.cursor()
-
-    c.execute("""
-        CREATE TABLE IF NOT EXISTS students (
-            id            INTEGER PRIMARY KEY AUTOINCREMENT,
-            name          TEXT NOT NULL,
-            email         TEXT UNIQUE NOT NULL,
-            password      TEXT NOT NULL,
-            goal          TEXT,
-            skills        TEXT DEFAULT '[]',
-            quiz_score    REAL DEFAULT 0,
-            project_score REAL DEFAULT 0,
-            activity      REAL DEFAULT 0,
-            created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    """)
-
-    c.execute("""
-        CREATE TABLE IF NOT EXISTS mentors (
-            id          INTEGER PRIMARY KEY AUTOINCREMENT,
-            name        TEXT NOT NULL,
-            email       TEXT UNIQUE NOT NULL,
-            expertise   TEXT DEFAULT '[]',
-            company     TEXT,
-            experience  INTEGER,
-            bio         TEXT,
-            created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    """)
-
-    c.execute("""
-        CREATE TABLE IF NOT EXISTS chat_history (
-            id         INTEGER PRIMARY KEY AUTOINCREMENT,
-            student_id INTEGER,
-            role       TEXT,
-            message    TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    """)
-
-   
-    c.execute("""
-        CREATE TABLE IF NOT EXISTS leetcode_history (
-            id          INTEGER PRIMARY KEY AUTOINCREMENT,
-            student_id  INTEGER,
-            track       TEXT,
-            topic       TEXT,
-            problem     TEXT,
-            hint_level  INTEGER,
-            hint        TEXT,
-            created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    """)
-
-    conn.commit()
-    conn.close()
-    print("Database ready!")
+    Base.metadata.create_all(bind=engine)
+    print("✅ Database tables ready!")

@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+from sqlalchemy import text
 from utils.db import get_connection
 import random
 
@@ -54,8 +55,7 @@ def get_questions(topic: str, count: int = 5):
     all_q    = QUESTIONS[topic]
     selected = random.sample(all_q, min(count, len(all_q)))
     return {
-        "topic":     topic,
-        "count":     len(selected),
+        "topic": topic, "count": len(selected),
         "questions": [{"id":q["id"],"question":q["question"],"options":q["options"]} for q in selected]
     }
 
@@ -77,21 +77,14 @@ def submit_quiz(data: SubmitRequest):
         q_id = str(q["id"])
         if q_id not in data.answers:
             continue
-
         user_ans    = data.answers[q_id]
         correct_ans = q["answer"]
-
-       
         if not isinstance(user_ans, int) or not (0 <= user_ans < len(q["options"])):
-            raise HTTPException(
-                status_code=422,
-                detail=f"Invalid answer index for question {q_id}: {user_ans}"
-            )
-
+            raise HTTPException(status_code=422,
+                detail=f"Invalid answer index for question {q_id}: {user_ans}")
         is_correct = user_ans == correct_ans
         if is_correct:
             correct += 1
-
         results.append({
             "question":       q["question"],
             "your_answer":    q["options"][user_ans],
@@ -99,30 +92,25 @@ def submit_quiz(data: SubmitRequest):
             "is_correct":     is_correct
         })
 
-    
     total     = len(results)
     score_pct = int((correct / total) * 100) if total > 0 else 0
 
-   
-    conn = get_connection()
+    session = get_connection()
     try:
-        conn.execute(
-            "UPDATE students SET quiz_score = ? WHERE id = ?",
-            (score_pct, data.student_id)
+        session.execute(
+            text("UPDATE students SET quiz_score = :score WHERE id = :id"),
+            {"score": score_pct, "id": data.student_id}
         )
-        conn.commit()
+        session.commit()
     except Exception:
-        conn.rollback()
+        session.rollback()
         raise HTTPException(status_code=500, detail="Database error! Score could not be saved.")
     finally:
-        conn.close()
+        session.close()
 
     return {
-        "student_id": data.student_id,
-        "topic":      data.topic,
-        "correct":    correct,
-        "total":      total,
-        "score":      score_pct,
-        "grade":      get_grade(score_pct),
-        "results":    results
+        "student_id": data.student_id, "topic": data.topic,
+        "correct": correct, "total": total,
+        "score": score_pct, "grade": get_grade(score_pct),
+        "results": results
     }

@@ -15,20 +15,22 @@ from utils.vector_store import build_index, load_from_disk
 from data.knowledge_base import CAREER_KNOWLEDGE
 from modules.leetcode import router as leetcode_router
 from modules.predictit_skill import router as predict_router
-
+from modules.scraper import router as scraper_router, init_jobs_table
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("Starting Vedha AI...")
+    from utils.db import init_db
+    init_db()
+    init_jobs_table()
     loaded = load_from_disk()
     if not loaded:
         print("First run - building knowledge base...")
         build_index(CAREER_KNOWLEDGE)
     print("RAG system ready!")
     yield
-
-app = FastAPI(title="Vedha AI", version="2.0.0", lifespan=lifespan)
+app = FastAPI(title="Vedha AI", version="3.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -49,8 +51,7 @@ app.include_router(trends_router,        prefix="/api/trends",        tags=["Tre
 app.include_router(interview_router,     prefix="/api/interview",     tags=["Interview"])
 app.include_router(leetcode_router,      prefix="/api/leetcode",      tags=["LeetCode"])
 app.include_router(predict_router, prefix="/api/predict", tags=["ML Predictions"])
-
-
+app.include_router(scraper_router, prefix="/api/scraper", tags=["Scraper"])
 
 
 @app.get("/")

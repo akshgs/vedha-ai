@@ -1,3 +1,4 @@
+# modules/auth.py — Updated for 2026 (PostgreSQL + multi-role)
 import os
 from datetime import datetime, timedelta
 from fastapi import APIRouter, HTTPException, Depends
@@ -5,6 +6,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 from passlib.context import CryptContext
 from jose import JWTError, jwt
+from sqlalchemy import text
 from utils.db import get_connection
 from dotenv import load_dotenv
 
@@ -16,81 +18,53 @@ router = APIRouter()
 # SECURITY CONFIGURATION
 # ═══════════════════════════════════════════════
 
-SECRET_KEY = os.getenv("SECRET_KEY", "vedha-ai-secret-2026-change-this")
-# SECRET_KEY: used to sign and verify JWT tokens
-# In production, always set a strong random key in .env
-
-ALGORITHM = "HS256"
-# HS256 = HMAC SHA-256, the standard JWT signing algorithm
-
+SECRET_KEY              = os.getenv("SECRET_KEY", "vedha-ai-secret-2026-change-this")
+ALGORITHM               = "HS256"
 ACCESS_TOKEN_EXPIRE_HOURS = 24
-# Token will expire after 24 hours
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-# bcrypt: industry-standard password hashing
-# Old: SHA256 — vulnerable to rainbow table attacks
-# New: bcrypt — adds random salt + slow hashing = very secure
+security    = HTTPBearer()
 
-security = HTTPBearer()
-# Expects "Authorization: Bearer <token>" in request headers
+# Valid user roles
+VALID_ROLES = ["student", "company", "employee"]
 
 # ═══════════════════════════════════════════════
-# PASSWORD HELPER FUNCTIONS
+# PASSWORD HELPERS
 # ═══════════════════════════════════════════════
 
 def hash_password(password: str) -> str:
-    # Hash a plain-text password using bcrypt
-    # bcrypt automatically adds a random salt
-    # Same password will produce a different hash each time
     return pwd_context.hash(password)
 
-
 def verify_password(plain: str, hashed: str) -> bool:
-    # Compare plain-text password with stored bcrypt hash
-    # Returns True if they match, False otherwise
     return pwd_context.verify(plain, hashed)
 
-
 # ═══════════════════════════════════════════════
-# JWT TOKEN HELPER FUNCTIONS
+# JWT HELPERS
 # ═══════════════════════════════════════════════
 
-def create_token(student_id: int, email: str) -> str:
-    # Create a signed JWT token for an authenticated user
-
-    expire = datetime.utcnow() + timedelta(hours=ACCESS_TOKEN_EXPIRE_HOURS)
-    # Calculate exact expiry timestamp (now + 24 hours)
-
+def create_token(student_id: int, email: str, role: str = "student") -> str:
+    expire  = datetime.utcnow() + timedelta(hours=ACCESS_TOKEN_EXPIRE_HOURS)
     payload = {
-        "sub": str(student_id),  # subject: who this token belongs to
+        "sub":   str(student_id),
         "email": email,
-        "exp": expire,           # expiry time, auto-checked by python-jose
-        "iat": datetime.utcnow() # issued at time
+        "role":  role,          # ← multi-user role in token
+        "exp":   expire,
+        "iat":   datetime.utcnow()
     }
-
-    token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
-    # Combines payload + secret key → signed JWT string
-    # Example: "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.abc123"
-    return token
+    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
 
 def verify_token(token: str) -> dict:
-    # Decode and verify a JWT token
-    # Raises 401 error if token is expired, tampered, or invalid
-
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        # Verifies signature and checks expiry automatically
-
+        payload    = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         student_id = payload.get("sub")
         if not student_id:
             raise HTTPException(status_code=401, detail="Invalid token!")
-
         return {
             "student_id": int(student_id),
-            "email": payload.get("email")
+            "email":      payload.get("email"),
+            "role":       payload.get("role", "student")
         }
-
     except JWTError:
         raise HTTPException(
             status_code=401,
@@ -101,27 +75,23 @@ def verify_token(token: str) -> dict:
 def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ) -> dict:
-    # FastAPI dependency function for protected endpoints
-    # Automatically extracts and verifies the Bearer token from headers
-    # Usage: add "current_user: dict = Depends(get_current_user)" to any endpoint
     return verify_token(credentials.credentials)
-
 
 # ═══════════════════════════════════════════════
 # REQUEST MODELS
 # ═══════════════════════════════════════════════
 
 class RegisterRequest(BaseModel):
-    name: str
-    email: str
+    name:     str
+    email:    str
     password: str
-    goal: str = "Student"
+    goal:     str = "Student"
+    role:     str = "student"   # student | company | employee
 
 
 class LoginRequest(BaseModel):
-    email: str
+    email:    str
     password: str
-
 
 # ═══════════════════════════════════════════════
 # API ENDPOINTS
@@ -129,149 +99,122 @@ class LoginRequest(BaseModel):
 
 @router.post("/register")
 def register(data: RegisterRequest):
-    # Register a new student account
-
-    # Basic input validation
     if len(data.password) < 6:
-        raise HTTPException(
-            status_code=400,
-            detail="Password must be at least 6 characters!"
-        )
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters!")
     if "@" not in data.email:
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid email format!"
-        )
+        raise HTTPException(status_code=400, detail="Invalid email format!")
+    if data.role not in VALID_ROLES:
+        raise HTTPException(status_code=400, detail=f"Invalid role! Choose from: {VALID_ROLES}")
 
-    conn = get_connection()
+    session = get_connection()
     try:
-        # Check if email already exists
-        existing = conn.execute(
-            "SELECT id FROM students WHERE email = ?",
-            (data.email,)
+        existing = session.execute(
+            text("SELECT id FROM students WHERE email = :email"),
+            {"email": data.email}
         ).fetchone()
 
         if existing:
-            raise HTTPException(
-                status_code=400,
-                detail="Email already registered!"
-            )
+            raise HTTPException(status_code=400, detail="Email already registered!")
 
-        # Hash password with bcrypt before storing
         hashed = hash_password(data.password)
 
-        # Insert new student into database
-        cursor = conn.execute(
-            """INSERT INTO students
-               (name, email, password, goal)
-               VALUES (?, ?, ?, ?)""",
-            (data.name, data.email, hashed, data.goal)
+        result = session.execute(
+            text("""INSERT INTO students (name, email, password, goal, role)
+                    VALUES (:name, :email, :password, :goal, :role)
+                    RETURNING id"""),
+            {
+                "name":     data.name,
+                "email":    data.email,
+                "password": hashed,
+                "goal":     data.goal,
+                "role":     data.role
+            }
         )
-        conn.commit()
-        new_id = cursor.lastrowid
-        # lastrowid = auto-generated ID of the new student
+        session.commit()
+        new_id = result.fetchone()[0]
 
     finally:
-        conn.close()
+        session.close()
 
-    # Generate JWT token immediately after registration
-    token = create_token(new_id, data.email)
+    token = create_token(new_id, data.email, data.role)
 
     return {
         "message": "Account created successfully!",
-        "token": token,
-        # Frontend should save this token in localStorage
+        "token":   token,
         "user": {
-            "id": new_id,
-            "name": data.name,
+            "id":    new_id,
+            "name":  data.name,
             "email": data.email,
-            "goal": data.goal
+            "goal":  data.goal,
+            "role":  data.role
         }
     }
 
 
 @router.post("/login")
 def login(data: LoginRequest):
-    # Authenticate a student and return a JWT token
-
-    conn = get_connection()
+    session = get_connection()
     try:
-        user = conn.execute(
-            "SELECT * FROM students WHERE email = ?",
-            (data.email,)
+        user = session.execute(
+            text("SELECT * FROM students WHERE email = :email"),
+            {"email": data.email}
         ).fetchone()
     finally:
-        conn.close()
+        session.close()
 
-    # Check if email exists
     if not user:
-        raise HTTPException(
-            status_code=400,
-            detail="Email not found!"
-        )
+        raise HTTPException(status_code=400, detail="Email not found!")
 
-    # Verify password using bcrypt (never compare plain text!)
-    if not verify_password(data.password, user["password"]):
-        raise HTTPException(
-            status_code=400,
-            detail="Incorrect password!"
-        )
+    if not verify_password(data.password, user.password):
+        raise HTTPException(status_code=400, detail="Incorrect password!")
 
-    # Create and return JWT token
-    token = create_token(user["id"], user["email"])
+    role  = user.role if user.role else "student"
+    token = create_token(user.id, user.email, role)
 
     return {
         "message": "Login successful!",
-        "token": token,
-        # Frontend: send as "Authorization: Bearer <token>" header
+        "token":   token,
         "user": {
-            "id": user["id"],
-            "name": user["name"],
-            "email": user["email"],
-            "goal": user["goal"]
+            "id":    user.id,
+            "name":  user.name,
+            "email": user.email,
+            "goal":  user.goal,
+            "role":  role
         }
     }
 
 
 @router.get("/me")
 def get_my_profile(current_user: dict = Depends(get_current_user)):
-    # Protected endpoint — requires valid JWT token
-    # Depends(get_current_user) automatically verifies the token
-    # Returns the logged-in student's profile
-
-    conn = get_connection()
+    session = get_connection()
     try:
-        user = conn.execute(
-            """SELECT id, name, email, goal, quiz_score, skills
-               FROM students WHERE id = ?""",
-            (current_user["student_id"],)
+        user = session.execute(
+            text("""SELECT id, name, email, goal, quiz_score, skills, role
+                    FROM students WHERE id = :id"""),
+            {"id": current_user["student_id"]}
         ).fetchone()
     finally:
-        conn.close()
+        session.close()
 
     if not user:
         raise HTTPException(status_code=404, detail="User not found!")
 
     return {
-        "id": user["id"],
-        "name": user["name"],
-        "email": user["email"],
-        "goal": user["goal"],
-        "quiz_score": user["quiz_score"],
-        "skills": user["skills"]
+        "id":         user.id,
+        "name":       user.name,
+        "email":      user.email,
+        "goal":       user.goal,
+        "quiz_score": user.quiz_score,
+        "skills":     user.skills,
+        "role":       user.role
     }
 
 
 @router.post("/refresh")
 def refresh_token(current_user: dict = Depends(get_current_user)):
-    # Issue a new token before the current one expires
-    # Frontend should call this endpoint when token is near expiry
-
     new_token = create_token(
         current_user["student_id"],
-        current_user["email"]
+        current_user["email"],
+        current_user.get("role", "student")
     )
-    return {
-        "message": "Token refreshed!",
-        "token": new_token
-    }
+    return {"message": "Token refreshed!", "token": new_token}
