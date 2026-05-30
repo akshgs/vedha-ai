@@ -1,10 +1,7 @@
-# modules/scraper.py — Live Job Scraper (2026)
 import os
 import json
-import asyncio
 from datetime import datetime
 from typing import List, Dict
-from playwright.async_api import async_playwright
 from bs4 import BeautifulSoup
 import httpx
 from sqlalchemy import text, Column, Integer, String, Text, DateTime
@@ -21,44 +18,35 @@ router = APIRouter()
 
 class JobListing(Base):
     __tablename__ = "job_listings"
-    id          = Column(Integer, primary_key=True, index=True)
-    title       = Column(String(200))
-    company     = Column(String(200))
-    location    = Column(String(200))
-    skills      = Column(Text, default="[]")
-    salary      = Column(String(100))
-    job_type    = Column(String(50))   # fulltime/internship/parttime
-    source      = Column(String(100))  # naukri/linkedin/technopark
-    url         = Column(String(500))
-    scraped_at  = Column(DateTime, default=datetime.utcnow)
+    id         = Column(Integer, primary_key=True, index=True)
+    title      = Column(String(200))
+    company    = Column(String(200))
+    location   = Column(String(200))
+    skills     = Column(Text, default="[]")
+    salary     = Column(String(100))
+    job_type   = Column(String(50))
+    source     = Column(String(100))
+    url        = Column(String(500))
+    scraped_at = Column(DateTime, default=datetime.utcnow)
 
 def init_jobs_table():
     Base.metadata.create_all(bind=engine)
     print("✅ job_listings table ready!")
 
 # ═══════════════════════════════════════════════
-# GITHUB JOBS SCRAPER (API — no bot detection)
+# GITHUB SCRAPER
 # ═══════════════════════════════════════════════
 
 async def scrape_github_trending() -> List[Dict]:
-    """Scrape GitHub trending repos — tech skill trends"""
     jobs = []
     try:
         async with httpx.AsyncClient(timeout=15) as client:
-            # GitHub trending via unofficial API
             headers = {"Accept": "application/json"}
             if os.getenv("GITHUB_TOKEN"):
                 headers["Authorization"] = f"token {os.getenv('GITHUB_TOKEN')}"
 
-            # Search trending Python ML repos
-            queries = [
-                "machine+learning+kerala",
-                "python+fastapi",
-                "llm+langchain",
-                "deep+learning+pytorch"
-            ]
-
-            for query in queries[:2]:  # limit to 2 for speed
+            queries = ["machine+learning+kerala", "python+fastapi"]
+            for query in queries:
                 resp = await client.get(
                     f"https://api.github.com/search/repositories"
                     f"?q={query}&sort=stars&order=desc&per_page=5",
@@ -81,13 +69,11 @@ async def scrape_github_trending() -> List[Dict]:
         print(f"GitHub scrape error: {e}")
     return jobs
 
-
 # ═══════════════════════════════════════════════
-# REMOTIVE API — Real Remote Tech Jobs
+# REMOTIVE API
 # ═══════════════════════════════════════════════
 
 async def scrape_remotive_jobs() -> List[Dict]:
-    """Remotive.com — free remote job API"""
     jobs = []
     try:
         async with httpx.AsyncClient(timeout=15) as client:
@@ -99,10 +85,8 @@ async def scrape_remotive_jobs() -> List[Dict]:
                 if resp.status_code == 200:
                     data = resp.json()
                     for job in data.get("jobs", []):
-                        # Extract skills from tags
-                        tags = job.get("tags", [])
+                        tags   = job.get("tags", [])
                         skills = json.dumps(tags[:5] if tags else ["Python"])
-
                         jobs.append({
                             "title":    job.get("title", ""),
                             "company":  job.get("company_name", ""),
@@ -117,48 +101,32 @@ async def scrape_remotive_jobs() -> List[Dict]:
         print(f"Remotive scrape error: {e}")
     return jobs
 
-
 # ═══════════════════════════════════════════════
-# PLAYWRIGHT SCRAPER — Technopark Kerala Jobs
+# TECHNOPARK SCRAPER (httpx — no Playwright)
 # ═══════════════════════════════════════════════
 
 async def scrape_technopark_jobs() -> List[Dict]:
-    """Scrape Technopark Kerala job listings"""
+    """Scrape Technopark Kerala job listings using httpx"""
     jobs = []
     try:
-        async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True)
-            page    = await browser.new_page()
-
-            await page.goto(
+        async with httpx.AsyncClient(timeout=15) as client:
+            resp = await client.get(
                 "https://technopark.org/jobs",
-                timeout=20000,
-                wait_until="domcontentloaded"
+                headers={"User-Agent": "Mozilla/5.0"}
             )
-            await page.wait_for_timeout(2000)
-
-            content = await page.content()
-            await browser.close()
-
-            soup = BeautifulSoup(content, "html.parser")
-
-            # Try multiple selectors
+            soup = BeautifulSoup(resp.text, "html.parser")
             job_cards = (
                 soup.find_all("div", class_="job-listing") or
                 soup.find_all("div", class_="job-card") or
-                soup.find_all("article") or
-                soup.find_all("li", class_="job")
+                soup.find_all("article")
             )
-
             for card in job_cards[:10]:
-                title   = card.find(["h2", "h3", "h4"])
-                company = card.find(["span", "p"], class_=lambda x: x and "company" in x.lower() if x else False)
-                link    = card.find("a")
-
+                title = card.find(["h2", "h3", "h4"])
+                link  = card.find("a")
                 if title:
                     jobs.append({
                         "title":    title.get_text(strip=True),
-                        "company":  company.get_text(strip=True) if company else "Technopark Company",
+                        "company":  "Technopark Company",
                         "location": "Trivandrum, Kerala",
                         "skills":   json.dumps(["Python", "IT"]),
                         "salary":   "As per industry",
@@ -166,12 +134,9 @@ async def scrape_technopark_jobs() -> List[Dict]:
                         "source":   "technopark",
                         "url":      link.get("href", "https://technopark.org/jobs") if link else ""
                     })
-
     except Exception as e:
         print(f"Technopark scrape error: {e}")
-
     return jobs
-
 
 # ═══════════════════════════════════════════════
 # SAVE TO DATABASE
@@ -180,17 +145,14 @@ async def scrape_technopark_jobs() -> List[Dict]:
 def save_jobs(jobs: List[Dict]) -> int:
     if not jobs:
         return 0
-
     session = get_connection()
     saved   = 0
     try:
         for job in jobs:
-            # Check duplicate
             existing = session.execute(
                 text("SELECT id FROM job_listings WHERE url = :url AND title = :title"),
-                {"url": job.get("url",""), "title": job.get("title","")}
+                {"url": job.get("url", ""), "title": job.get("title", "")}
             ).fetchone()
-
             if not existing:
                 session.execute(text("""
                     INSERT INTO job_listings
@@ -199,13 +161,10 @@ def save_jobs(jobs: List[Dict]) -> int:
                             :job_type, :source, :url, :scraped_at)
                 """), {**job, "scraped_at": datetime.utcnow()})
                 saved += 1
-
         session.commit()
     finally:
         session.close()
-
     return saved
-
 
 # ═══════════════════════════════════════════════
 # MAIN SCRAPE FUNCTION
@@ -215,9 +174,8 @@ async def run_all_scrapers() -> Dict:
     print("🔍 Starting job scrapers...")
     init_jobs_table()
 
-    # Run all scrapers
-    github_jobs    = await scrape_github_trending()
-    remotive_jobs  = await scrape_remotive_jobs()
+    github_jobs     = await scrape_github_trending()
+    remotive_jobs   = await scrape_remotive_jobs()
     technopark_jobs = await scrape_technopark_jobs()
 
     all_jobs = github_jobs + remotive_jobs + technopark_jobs
@@ -234,14 +192,12 @@ async def run_all_scrapers() -> Dict:
     print(f"✅ Scraping done: {result}")
     return result
 
-
 # ═══════════════════════════════════════════════
 # API ENDPOINTS
 # ═══════════════════════════════════════════════
 
 @router.post("/scrape")
 async def trigger_scrape():
-    """Manually trigger job scraping"""
     result = await run_all_scrapers()
     return {"message": "Scraping complete!", "result": result}
 
@@ -252,22 +208,18 @@ async def get_jobs(
     job_type: str = None,
     limit:    int = 20
 ):
-    """Get scraped jobs with optional filters"""
     session = get_connection()
     try:
         query  = "SELECT * FROM job_listings WHERE 1=1"
         params = {}
-
         if source:
             query += " AND source = :source"
             params["source"] = source
         if job_type:
             query += " AND job_type = :job_type"
             params["job_type"] = job_type
-
         query += " ORDER BY scraped_at DESC LIMIT :limit"
         params["limit"] = limit
-
         rows = session.execute(text(query), params).fetchall()
         jobs = [
             {
@@ -286,25 +238,20 @@ async def get_jobs(
         ]
     finally:
         session.close()
-
     return {"total": len(jobs), "jobs": jobs}
 
 
 @router.get("/jobs/match/{student_id}")
 async def match_jobs_to_student(student_id: int):
-    """Match jobs to student's skills"""
     session = get_connection()
     try:
         student = session.execute(
             text("SELECT skills FROM students WHERE id = :id"),
             {"id": student_id}
         ).fetchone()
-
         if not student:
             return {"error": "Student not found"}
-
         student_skills = json.loads(student.skills or "[]")
-
         rows = session.execute(
             text("SELECT * FROM job_listings ORDER BY scraped_at DESC LIMIT 50")
         ).fetchall()
@@ -327,7 +274,6 @@ async def match_jobs_to_student(student_id: int):
             "url":           r.url,
             "match_percent": match_pct
         })
-
     results.sort(key=lambda x: x["match_percent"], reverse=True)
     return {
         "student_id":     student_id,
@@ -339,25 +285,20 @@ async def match_jobs_to_student(student_id: int):
 
 @router.get("/stats")
 async def scraper_stats():
-    """Scraping statistics"""
     session = get_connection()
     try:
         total = session.execute(
             text("SELECT COUNT(*) FROM job_listings")
         ).scalar()
-
         by_source = session.execute(text("""
             SELECT source, COUNT(*) as cnt
-            FROM job_listings
-            GROUP BY source
+            FROM job_listings GROUP BY source
         """)).fetchall()
-
         last_scraped = session.execute(
             text("SELECT MAX(scraped_at) FROM job_listings")
         ).scalar()
     finally:
         session.close()
-
     return {
         "total_jobs":   total,
         "by_source":    {r.source: r.cnt for r in by_source},

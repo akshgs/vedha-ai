@@ -1,4 +1,5 @@
-﻿from fastapi import FastAPI
+﻿# app.py — Vedha AI v3.0
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from modules.auth import router as auth_router
@@ -16,6 +17,7 @@ from data.knowledge_base import CAREER_KNOWLEDGE
 from modules.leetcode import router as leetcode_router
 from modules.predictit_skill import router as predict_router
 from modules.scraper import router as scraper_router, init_jobs_table
+# from modules.emotion_detector import router as emotion_router  # needs tensorflow
 
 
 @asynccontextmanager
@@ -30,6 +32,8 @@ async def lifespan(app: FastAPI):
         build_index(CAREER_KNOWLEDGE)
     print("RAG system ready!")
     yield
+
+
 app = FastAPI(title="Vedha AI", version="3.0.0", lifespan=lifespan)
 
 app.add_middleware(
@@ -50,8 +54,9 @@ app.include_router(knowledge_router,     prefix="/api/knowledge",     tags=["Kno
 app.include_router(trends_router,        prefix="/api/trends",        tags=["Trends"])
 app.include_router(interview_router,     prefix="/api/interview",     tags=["Interview"])
 app.include_router(leetcode_router,      prefix="/api/leetcode",      tags=["LeetCode"])
-app.include_router(predict_router, prefix="/api/predict", tags=["ML Predictions"])
-app.include_router(scraper_router, prefix="/api/scraper", tags=["Scraper"])
+app.include_router(predict_router,       prefix="/api/predict",       tags=["ML Predictions"])
+app.include_router(scraper_router,       prefix="/api/scraper",       tags=["Scraper"])
+# app.include_router(emotion_router,     prefix="/api/emotion",       tags=["Emotion"])
 
 
 @app.get("/")
