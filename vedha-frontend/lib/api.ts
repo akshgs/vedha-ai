@@ -86,3 +86,47 @@ export const opportunitiesAPI = {
   all: () => api.get("/api/opportunities/all"),
   match: (student_id: number) => api.get(`/api/opportunities/match/${student_id}`),
 };
+
+// ── Resume Scanner ────────────────────────────
+export const resumeAPI = {
+  scan: (formData: FormData) =>
+    api.post("/api/resume/scan", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    }),
+};
+
+// ── Mock Interview ────────────────────────────
+export const interviewAPI = {
+  questions: (role: string) => api.get(`/api/interview/questions/${role}`),
+  analyze: (formData: FormData) =>
+    api.post("/api/interview/analyze", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    }),
+};
+
+// ── ML Skill Predictions ──────────────────────
+export const predictAPI = {
+  train: () => api.post("/api/predict/train"),
+  predictAll: () => api.get("/api/predict/predict-all"),
+  topSkills: () => api.get("/api/predict/top-skills"),
+  modelStatus: () => api.get("/api/predict/model-status"),
+};
+
+// ── LeetCode Sync & DSA Practice ──────────────
+export const leetcodeAPI = {
+  tracks: () => api.get("/api/leetcode/tracks"),
+  topics: (track: string) => api.get(`/api/leetcode/topics/${track}`),
+  practice: (data: { student_id: number; track: string; topic: string; difficulty: string }) =>
+    api.post("/api/leetcode/practice", data),
+  hint: (data: { student_id: number; track: string; topic: string; problem: string; hint_level: number; code?: string }) =>
+    api.post("/api/leetcode/hint", data),
+  history: (student_id: number) => api.get(`/api/leetcode/history/${student_id}`),
+};
+
+export const agentAPI = {
+  careerAnalysis: (data: {
+    resume_text: string;
+    target_role: string;
+  }) =>
+    api.post("/api/agents/career-analysis", data),
+};

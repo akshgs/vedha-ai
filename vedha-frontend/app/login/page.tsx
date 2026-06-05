@@ -1,137 +1,354 @@
-// app/login/page.tsx — Login & Register
+// app/login/page.tsx — Premium Glassmorphic Login & Register
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { authAPI } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Card, Button, Input, Select, Alert, App } from "antd";
+import { motion, AnimatePresence } from "framer-motion";
+import { Lock, Mail, User, Sparkles, Briefcase } from "lucide-react";
+
+// Schemas for forms
+const loginSchema = z.object({
+  email: z.string().email("Please enter a valid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+});
+
+const registerSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Please enter a valid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  goal: z.string().min(2, "Goal cannot be empty"),
+  role: z.enum(["student", "company", "employee"]),
+});
+
+type LoginFormValues = z.infer<typeof loginSchema>;
+type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export default function LoginPage() {
-  const router   = useRouter();
-  const setAuth  = useAuthStore((s) => s.setAuth);
-  const [isLogin, setIsLogin]   = useState(true);
-  const [loading, setLoading]   = useState(false);
-  const [error,   setError]     = useState("");
-  const [form,    setForm]      = useState({
-    name: "", email: "", password: "", goal: "ML Engineer", role: "student"
+  const { message } = App.useApp();
+  const router = useRouter();
+  const setAuth = useAuthStore((s) => s.setAuth);
+  const [isLogin, setIsLogin] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [serverError, setServerError] = useState("");
+
+  const loginForm = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { email: "", password: "" },
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-    try {
-      const res = isLogin
-        ? await authAPI.login({ email: form.email, password: form.password })
-        : await authAPI.register(form);
+  const registerForm = useForm<RegisterFormValues>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+      goal: "ML Engineer",
+      role: "student",
+    },
+  });
 
+  const handleLoginSubmit = async (data: LoginFormValues) => {
+    setLoading(true);
+    setServerError("");
+    try {
+      const res = await authAPI.login(data);
       const { token, user } = res.data;
       setAuth(user, token);
+      message.success("Logged in successfully!");
 
-      // Redirect based on role
-      if (user.role === "company")        router.push("/company");
-      else if (user.role === "employee")  router.push("/employee");
-      else                                router.push("/student");
-
+      if (user.role === "company") router.push("/company");
+      else if (user.role === "employee") router.push("/employee");
+      else router.push("/student");
     } catch (err: any) {
-      setError(err.response?.data?.detail || "Something went wrong!");
+      setServerError(err.response?.data?.detail || "Invalid email or password!");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRegisterSubmit = async (data: RegisterFormValues) => {
+    setLoading(true);
+    setServerError("");
+    try {
+      const res = await authAPI.register(data);
+      const { token, user } = res.data;
+      setAuth(user, token);
+      message.success("Registered account successfully!");
+
+      if (user.role === "company") router.push("/company");
+      else if (user.role === "employee") router.push("/employee");
+      else router.push("/student");
+    } catch (err: any) {
+      setServerError(err.response?.data?.detail || "Email already exists or invalid details.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-950 via-blue-900 to-indigo-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Logo */}
+    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-slate-900 to-indigo-950 flex flex-col items-center justify-center p-4 relative overflow-hidden">
+      {/* Background decorations */}
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl -z-10" />
+      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl -z-10" />
+
+      {/* Main Container */}
+      <motion.div
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="w-full max-w-md"
+      >
+        {/* Branding header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">⚡ Vedha AI</h1>
-          <p className="text-blue-300">Kerala's AI Career Platform</p>
+          <h1 className="text-4xl font-extrabold text-white tracking-tight flex items-center justify-center gap-2">
+            <Sparkles className="text-indigo-400 w-8 h-8 animate-pulse" /> Vedha AI
+          </h1>
+          <p className="text-gray-400 mt-2 text-sm">Kerala's AI-Powered Career Ecosystem</p>
         </div>
 
-        {/* Card */}
-        <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20 shadow-2xl">
-          {/* Tabs */}
-          <div className="flex rounded-xl bg-white/10 p-1 mb-6">
+        {/* Form Panel card */}
+        <Card className="glass-panel border-white/10 shadow-2xl rounded-3xl overflow-hidden bg-white/5 backdrop-blur-md">
+          {/* Custom Tabs */}
+          <div className="flex bg-white/5 border border-white/5 rounded-2xl p-1.5 mb-6">
             <button
-              onClick={() => setIsLogin(true)}
-              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
-                isLogin ? "bg-white text-blue-900" : "text-white hover:text-blue-200"
+              onClick={() => {
+                setIsLogin(true);
+                setServerError("");
+              }}
+              className={`flex-1 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                isLogin
+                  ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30"
+                  : "text-gray-400 hover:text-white"
               }`}
             >
-              Login
+              Sign In
             </button>
             <button
-              onClick={() => setIsLogin(false)}
-              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
-                !isLogin ? "bg-white text-blue-900" : "text-white hover:text-blue-200"
+              onClick={() => {
+                setIsLogin(false);
+                setServerError("");
+              }}
+              className={`flex-1 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                !isLogin
+                  ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30"
+                  : "text-gray-400 hover:text-white"
               }`}
             >
               Register
             </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {!isLogin && (
-              <>
-                <input
-                  type="text" placeholder="Full Name"
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-blue-300 focus:outline-none focus:border-blue-400"
-                  required
-                />
-                <select
-                  value={form.role}
-                  onChange={(e) => setForm({ ...form, role: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white focus:outline-none focus:border-blue-400"
+          {/* Form switch with animation */}
+          <AnimatePresence mode="wait">
+            {isLogin ? (
+              <motion.form
+                key="login"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
+                transition={{ duration: 0.2 }}
+                onSubmit={loginForm.handleSubmit(handleLoginSubmit)}
+                className="space-y-4"
+              >
+                <div className="space-y-1">
+                  <Controller
+                    name="email"
+                    control={loginForm.control}
+                    render={({ field, fieldState }) => (
+                      <>
+                        <Input
+                          {...field}
+                          prefix={<Mail className="w-4 h-4 text-gray-400" />}
+                          placeholder="Email Address"
+                          size="large"
+                          className="bg-white/5 border-white/10 hover:border-indigo-500 focus:border-indigo-500 text-white"
+                        />
+                        {fieldState.error && (
+                          <p className="text-red-400 text-xs mt-1 ml-1">{fieldState.error.message}</p>
+                        )}
+                      </>
+                    )}
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <Controller
+                    name="password"
+                    control={loginForm.control}
+                    render={({ field, fieldState }) => (
+                      <>
+                        <Input.Password
+                          {...field}
+                          prefix={<Lock className="w-4 h-4 text-gray-400" />}
+                          placeholder="Password"
+                          size="large"
+                          className="bg-white/5 border-white/10 hover:border-indigo-500 focus:border-indigo-500 text-white"
+                        />
+                        {fieldState.error && (
+                          <p className="text-red-400 text-xs mt-1 ml-1">{fieldState.error.message}</p>
+                        )}
+                      </>
+                    )}
+                  />
+                </div>
+
+                {serverError && (
+                  <Alert title={serverError} type="error" showIcon className="bg-red-500/10 border-red-500/20 text-red-200 text-xs rounded-xl" />
+                )}
+
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  size="large"
+                  loading={loading}
+                  className="w-full bg-indigo-600 hover:bg-indigo-500 border-none font-semibold rounded-xl h-11 shadow-lg shadow-indigo-600/30 cursor-pointer mt-2"
                 >
-                  <option value="student"  className="text-black">🎓 Student</option>
-                  <option value="company"  className="text-black">🏢 Company</option>
-                  <option value="employee" className="text-black">💼 Employee</option>
-                </select>
-                <input
-                  type="text" placeholder="Goal (e.g. ML Engineer)"
-                  value={form.goal}
-                  onChange={(e) => setForm({ ...form, goal: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-blue-300 focus:outline-none focus:border-blue-400"
-                />
-              </>
+                  Access Platform
+                </Button>
+              </motion.form>
+            ) : (
+              <motion.form
+                key="register"
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                transition={{ duration: 0.2 }}
+                onSubmit={registerForm.handleSubmit(handleRegisterSubmit)}
+                className="space-y-4"
+              >
+                <div className="space-y-1">
+                  <Controller
+                    name="name"
+                    control={registerForm.control}
+                    render={({ field, fieldState }) => (
+                      <>
+                        <Input
+                          {...field}
+                          prefix={<User className="w-4 h-4 text-gray-400" />}
+                          placeholder="Full Name"
+                          size="large"
+                          className="bg-white/5 border-white/10 hover:border-indigo-500 focus:border-indigo-500 text-white"
+                        />
+                        {fieldState.error && (
+                          <p className="text-red-400 text-xs mt-1 ml-1">{fieldState.error.message}</p>
+                        )}
+                      </>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <Controller
+                      name="role"
+                      control={registerForm.control}
+                      render={({ field }) => (
+                        <Select
+                          {...field}
+                          size="large"
+                          className="w-full custom-select"
+                          options={[
+                            { value: "student", label: "Student" },
+                            { value: "company", label: "Recruiter" },
+                            { value: "employee", label: "Employee / Admin" },
+                          ]}
+                        />
+                      )}
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <Controller
+                      name="goal"
+                      control={registerForm.control}
+                      render={({ field, fieldState }) => (
+                        <>
+                          <Input
+                            {...field}
+                            prefix={<Briefcase className="w-4 h-4 text-gray-400" />}
+                            placeholder="Career Goal"
+                            size="large"
+                            className="bg-white/5 border-white/10 text-white"
+                          />
+                          {fieldState.error && (
+                            <p className="text-red-400 text-xs mt-1 ml-1">{fieldState.error.message}</p>
+                          )}
+                        </>
+                      )}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <Controller
+                    name="email"
+                    control={registerForm.control}
+                    render={({ field, fieldState }) => (
+                      <>
+                        <Input
+                          {...field}
+                          prefix={<Mail className="w-4 h-4 text-gray-400" />}
+                          placeholder="Email Address"
+                          size="large"
+                          className="bg-white/5 border-white/10 text-white"
+                        />
+                        {fieldState.error && (
+                          <p className="text-red-400 text-xs mt-1 ml-1">{fieldState.error.message}</p>
+                        )}
+                      </>
+                    )}
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <Controller
+                    name="password"
+                    control={registerForm.control}
+                    render={({ field, fieldState }) => (
+                      <>
+                        <Input.Password
+                          {...field}
+                          prefix={<Lock className="w-4 h-4 text-gray-400" />}
+                          placeholder="Create Password (min 6 chars)"
+                          size="large"
+                          className="bg-white/5 border-white/10 text-white"
+                        />
+                        {fieldState.error && (
+                          <p className="text-red-400 text-xs mt-1 ml-1">{fieldState.error.message}</p>
+                        )}
+                      </>
+                    )}
+                  />
+                </div>
+
+                {serverError && (
+                  <Alert title={serverError} type="error" showIcon className="bg-red-500/10 border-red-500/20 text-red-200 text-xs rounded-xl" />
+                )}
+
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  size="large"
+                  loading={loading}
+                  className="w-full bg-indigo-600 hover:bg-indigo-500 border-none font-semibold rounded-xl h-11 shadow-lg shadow-indigo-600/30 cursor-pointer mt-2"
+                >
+                  Create Account
+                </Button>
+              </motion.form>
             )}
+          </AnimatePresence>
+        </Card>
 
-            <input
-              type="email" placeholder="Email"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-              className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-blue-300 focus:outline-none focus:border-blue-400"
-              required
-            />
-            <input
-              type="password" placeholder="Password"
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-              className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-blue-300 focus:outline-none focus:border-blue-400"
-              required
-            />
-
-            {error && (
-              <div className="bg-red-500/20 border border-red-500/50 rounded-xl p-3 text-red-200 text-sm">
-                {error}
-              </div>
-            )}
-
-            <button
-              type="submit" disabled={loading}
-              className="w-full py-3 bg-blue-500 hover:bg-blue-400 disabled:bg-blue-800 text-white font-semibold rounded-xl transition-all"
-            >
-              {loading ? "Loading..." : isLogin ? "Login" : "Create Account"}
-            </button>
-          </form>
-        </div>
-
-        <p className="text-center text-blue-400 text-sm mt-4">
-          Free & Open Source • Kerala IT Market
+        {/* Footer info */}
+        <p className="text-center text-gray-500 text-xs mt-6">
+          Vedha AI Platform v3.0 • Developed for Kerala Technology Hubs
         </p>
-      </div>
+      </motion.div>
     </div>
   );
 }
