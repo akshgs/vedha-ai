@@ -16,7 +16,7 @@ ROLE_SKILLS = {
         "Statistics", "Machine Learning", "SQL",
         "Data Visualization", "Matplotlib", "Seaborn"
     ],
-    "ML Engineer": [
+    "Machine Learning Engineer": [
         "Python", "TensorFlow", "PyTorch", "Scikit-learn",
         "Docker", "REST APIs", "Deep Learning", "Git",
         "MLflow", "Model Deployment"
@@ -93,7 +93,7 @@ ROLE_SKILLS = {
 # ═══════════════════════════════════════════════
 
 KERALA_COMPANIES = {
-    "ML Engineer":           ["UST Global", "IBS Software", "Tata Elxsi", "Envestnet Yodlee"],
+    "Machine Learning Engineer": ["UST Global", "IBS Software", "Tata Elxsi", "Envestnet Yodlee"],
     "Data Scientist":        ["UST Global", "Ernst & Young", "Mphasis", "IBS Software"],
     "Full Stack Developer":  ["UST Global", "Infosys Kochi", "TCS Kochi", "Quest Global"],
     "DevOps Engineer":       ["UST Global", "Wipro Kochi", "IBS Software", "Mphasis"],

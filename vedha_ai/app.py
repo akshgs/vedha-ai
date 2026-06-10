@@ -17,8 +17,8 @@ from data.knowledge_base import CAREER_KNOWLEDGE
 from modules.leetcode import router as leetcode_router
 from modules.predictit_skill import router as predict_router
 from modules.scraper import router as scraper_router, init_jobs_table
-# from modules.emotion_detector import router as emotion_router  # needs tensorflow
-
+from modules.resume_scanner import router as resume_router
+from modules.agent_workflow import router as agent_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -56,8 +56,16 @@ app.include_router(interview_router,     prefix="/api/interview",     tags=["Int
 app.include_router(leetcode_router,      prefix="/api/leetcode",      tags=["LeetCode"])
 app.include_router(predict_router,       prefix="/api/predict",       tags=["ML Predictions"])
 app.include_router(scraper_router,       prefix="/api/scraper",       tags=["Scraper"])
-# app.include_router(emotion_router,     prefix="/api/emotion",       tags=["Emotion"])
+app.include_router(agent_router,          prefix="/api/agent",          tags=["Agent"])
+app.include_router(resume_router,        prefix="/api/resume",        tags=["Resume"])
 
+
+
+app.include_router(
+    agent_router,
+    prefix="/api/agents",
+    tags=["Agent Workflow"]
+)
 
 @app.get("/")
 def home():

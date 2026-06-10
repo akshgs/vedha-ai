@@ -54,6 +54,23 @@ class QuizResult(Base):
     score      = Column(Float)
     created_at = Column(DateTime, default=datetime.utcnow)
 
+class ResumeAnalysis(Base):
+    __tablename__ = "resume_analysis"
+
+    id = Column(Integer, primary_key=True, index=True)
+    student_id = Column(Integer, index=True)
+
+    target_role = Column(String(100))
+    match_percent = Column(Float)
+
+    matched_skills = Column(Text)
+    missing_skills = Column(Text)
+
+    ai_feedback = Column(Text)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    
 # ─── Helpers ──────────────────────────────────────
 def get_db():
     db = SessionLocal()

@@ -21,7 +21,7 @@ router = APIRouter()
 llm = ChatGroq(
     model="llama-3.3-70b-versatile",
     groq_api_key=os.getenv("GROQ_API_KEY"),
-    temperature=0.3
+    temperature=0.7
 )
 
 # ──────────────────────────────────────────────────────
@@ -30,69 +30,36 @@ llm = ChatGroq(
 
 chat_prompt = PromptTemplate(
     input_variables=[
-    "student_context",
-    "resume_context",
-    "chat_history",
-    "knowledge_context",
-    "question"
-],
-   template="""
-You are Vedha AI, an AI-powered career mentor.
-
-Question:
-{question}
-
-Relevant Knowledge:
-{knowledge_context}
+        "student_context",
+        "chat_history",
+        "knowledge_context",
+        "question"
+    ],
+    template="""
+You are Vedha AI, a professional AI career mentor for students.
 
 Student Profile:
 {student_context}
 
-Resume Analysis:
-{resume_context}
+Relevant Knowledge:
+{knowledge_context}
 
 Previous Conversation:
 {chat_history}
 
-Rules:
+Student Question:
+{question}
 
-1. FIRST answer the user's question directly.
-
-2. Use Relevant Knowledge whenever available.
-
-3. If Resume Analysis exists, use it to personalize career advice.
-
-4. Mention resume strengths before suggesting improvements.
-
-5. Prioritize missing skills from the resume analysis.
-
-6. If the user asks about:
-   - AI Engineer
-   - ML Engineer
-   - Data Scientist
-   - Resume
-   - Career
-   - Roadmap
-   - Interview
-   - Skills
-
-   Then use the Resume Analysis section.
-
-7. Mention:
-   - Resume Score
-   - Matched Skills
-   - Missing Skills
-
-   whenever relevant.
-
-8. For general knowledge questions
-   (example: "What is Python?", "What is TensorFlow?")
-   ignore Resume Analysis completely.
-
-9. Keep answers concise, practical, and personalized.
-
-Answer:
-""")
+Instructions:
+- Use the Relevant Knowledge section whenever possible.
+- Personalize responses using the Student Profile.
+- Give practical career advice.
+- Focus on Indian job market.
+- Mention KSUM, TCS, Infosys only when relevant.
+- Always reply in English.
+- Keep answers concise and useful.
+"""
+)
 
 chat_chain = chat_prompt | llm | StrOutputParser()
 
@@ -113,11 +80,13 @@ def get_student_context(student_id: int) -> str:
 
     try:
         result = session.execute(
-            text("""
+            text(
+                """
                 SELECT *
                 FROM students
                 WHERE id = :id
-            """),
+                """
+            ),
             {"id": student_id}
         ).fetchone()
 
@@ -132,41 +101,6 @@ Name: {result.name}
 Goal: {result.goal}
 Skills: {result.skills}
 Quiz Score: {result.quiz_score}%
-"""
-
-def get_resume_context(student_id: int) -> str:
-    session = get_connection()
-
-    try:
-        result = session.execute(
-            text("""
-                SELECT *
-                FROM resume_analysis
-                WHERE student_id = :id
-                ORDER BY id DESC
-                LIMIT 1
-            """),
-            {"id": student_id}
-        ).fetchone()
-
-        print("RESUME QUERY RESULT:", result)
-
-    finally:
-        session.close()
-
-    if not result:
-        return "No resume analysis available."
-
-    return f"""
-Resume Score: {result.match_percent}%
-
-Target Role: {result.target_role}
-
-Matched Skills:
-{result.matched_skills}
-
-Missing Skills:
-{result.missing_skills}
 """
 
 # ──────────────────────────────────────────────────────
@@ -282,39 +216,9 @@ async def chat(data: ChatRequest):
         data.message
     )
 
-    career_keywords = [
-        "career",
-        "job",
-        "resume",
-        "roadmap",
-        "skill",
-        "interview",
-        "placement",
-        "internship",
-        "ai engineer",
-        "ml engineer",
-        "data scientist"
-    ]
-
-    is_career_question = any(
-        keyword in data.message.lower()
-        for keyword in career_keywords
+    student_context = get_student_context(
+        data.student_id
     )
-
-    student_context = (
-        get_student_context(data.student_id)
-        if is_career_question
-        else ""
-    )
-
-    resume_context = (
-        get_resume_context(data.student_id)
-        if is_career_question
-        else ""
-    )
-    print("\n========== RESUME CONTEXT ==========")
-    print(resume_context)
-    print("====================================\n")
 
     chat_history = get_chat_history(
         data.student_id
@@ -333,7 +237,6 @@ async def chat(data: ChatRequest):
         reply = await chat_chain.ainvoke(
             {
                 "student_context": student_context,
-                "resume_context": resume_context,
                 "chat_history": chat_history,
                 "knowledge_context": knowledge_context,
                 "question": data.message

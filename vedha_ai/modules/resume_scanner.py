@@ -11,6 +11,9 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 import numpy as np
 from dotenv import load_dotenv
+import json
+from sqlalchemy import text
+from utils.db import get_connection
 
 load_dotenv()
 router = APIRouter()
@@ -158,16 +161,72 @@ Be encouraging and specific to Indian job market."""
 
 feedback_chain = feedback_prompt | llm | StrOutputParser()
 
+
+def save_resume_analysis(
+    student_id,
+    target_role,
+    match_percent,
+    matched_skills,
+    missing_skills,
+    ai_feedback
+):
+    session = get_connection()
+
+    try:
+        session.execute(
+            text("""
+            INSERT INTO resume_analysis (
+                student_id,
+                target_role,
+                match_percent,
+                matched_skills,
+                missing_skills,
+                ai_feedback
+            )
+            VALUES (
+                :student_id,
+                :target_role,
+                :match_percent,
+                :matched_skills,
+                :missing_skills,
+                :ai_feedback
+            )
+            """),
+            {
+                "student_id": student_id,
+                "target_role": target_role,
+                "match_percent": match_percent,
+                "matched_skills": json.dumps(matched_skills),
+                "missing_skills": json.dumps(missing_skills),
+                "ai_feedback": ai_feedback
+            }
+        )
+
+        session.commit()
+        print("INSERT SUCCESS")
+
+    except Exception as e:
+        print("DATABASE ERROR:", e)
+        session.rollback()
+
+    finally:
+        session.close()
+
+
+        
 @router.post("/scan")
 async def scan_resume(
+    student_id: int = Form(...),
     file: UploadFile = File(...),
     target_role: str = Form("Machine Learning Engineer")
-   
 ):
     file_bytes = await file.read()
 
     if len(file_bytes) > 5 * 1024 * 1024:
-        raise HTTPException(status_code=400, detail="File too large! Max 5MB.")
+        raise HTTPException(
+            status_code=400,
+            detail="File too large! Max 5MB."
+        )
 
     resume_text = extract_text(file_bytes, file.filename)
 
@@ -177,26 +236,48 @@ async def scan_resume(
             detail="Resume text too short. Please upload a proper resume."
         )
 
-   
     extracted_skills = extract_skills_nlp(resume_text)
 
     if target_role not in ROLE_SKILLS:
         target_role = "Machine Learning Engineer"
 
-    
-    match_result = calculate_role_match(extracted_skills, target_role)
+    match_result = calculate_role_match(
+        extracted_skills,
+        target_role
+    )
 
     try:
-        feedback = await feedback_chain.ainvoke({
+        feedback = await feedback_chain.ainvoke(
+        {
             "role": target_role,
             "matched_skills": ", ".join(match_result["matched_skills"]),
             "missing_skills": ", ".join(match_result["missing_skills"]),
             "match_percent": match_result["match_percent"]
-        })
+        }
+    )
+
     except Exception as e:
+        print("Feedback Error:", e)
         feedback = "AI feedback temporarily unavailable."
+    print("\n========== SAVING RESUME ==========")
+    print("Student ID:", student_id)
+    print("Role:", target_role)
+    print("Match:", match_result["match_percent"])
+
+    save_resume_analysis(
+        student_id,
+        target_role,
+        match_result["match_percent"],
+        match_result["matched_skills"],
+        match_result["missing_skills"],
+        feedback
+    )
+
+    print("DATABASE SAVE COMPLETED")
+    print("===================================\n")
 
     return {
+        "student_id": student_id,
         "filename": file.filename,
         "target_role": target_role,
         "extracted_skills": extracted_skills,
