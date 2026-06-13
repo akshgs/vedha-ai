@@ -62,19 +62,22 @@ ROLE_SKILLS = {
     ]
 }
 
+
 def extract_text_from_pdf(file_bytes: bytes) -> str:
     text = ""
     with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
         for page in pdf.pages:
             page_text = page.extract_text()
             if page_text:
-                text += page_text + "\n" 
+                text += page_text + "\n"
     return text.strip()
+
 
 def extract_text_from_docx(file_bytes: bytes) -> str:
     doc = docx.Document(io.BytesIO(file_bytes))
     paragraphs = [para.text for para in doc.paragraphs if para.text.strip()]
-    return "\n".join(paragraphs) 
+    return "\n".join(paragraphs)
+
 
 def extract_text(file_bytes: bytes, filename: str) -> str:
     if filename.endswith(".pdf"):
@@ -87,13 +90,14 @@ def extract_text(file_bytes: bytes, filename: str) -> str:
             detail="Only PDF and DOCX files supported!"
         )
 
+
 def extract_skills_nlp(resume_text: str) -> list:
     doc = nlp(resume_text.lower())
     extracted = set()
 
     all_known_skills = set()
     for skill in ROLE_SKILLS.values():
-        all_known_skills.update(skill) 
+        all_known_skills.update(skill)
 
     for skill in all_known_skills:
         if skill in resume_text.lower():
@@ -114,6 +118,25 @@ def extract_skills_nlp(resume_text: str) -> list:
 
     return list(extracted)
 
+
+SKILL_ALIASES = {
+    "neural networks": [
+        "deep learning",
+        "tensorflow",
+        "pytorch"
+    ],
+    "data preprocessing": [
+        "data cleaning"
+    ],
+    "model training": [
+        "machine learning"
+    ],
+    "numpy": [
+        "pandas"
+    ]
+}
+
+
 def calculate_role_match(resume_skills: list, role: str) -> dict:
     required_skills = ROLE_SKILLS.get(role, [])
 
@@ -126,19 +149,45 @@ def calculate_role_match(resume_skills: list, role: str) -> dict:
     resume_embedding = embedding_model.encode([resume_text])
     required_embedding = embedding_model.encode([required_text])
 
-   
     similarity = cosine_similarity(resume_embedding, required_embedding)[0][0]
 
-    match_percent = round(float(similarity) * 100, 1)
+    resume_skills_lower = [s.lower() for s in resume_skills]
 
-    matched = [s for s in required_skills if s in resume_skills]
-    missing = [s for s in required_skills if s not in resume_skills]
+    matched = []
+    missing = []
+
+    for skill in required_skills:
+
+        if skill.lower() in resume_skills_lower:
+            matched.append(skill)
+            continue
+
+        aliases = SKILL_ALIASES.get(skill.lower(), [])
+
+        alias_found = any(
+            alias.lower() in resume_skills_lower
+            for alias in aliases
+        )
+
+        if alias_found:
+            matched.append(skill)
+        else:
+            missing.append(skill)
+
+    skill_score = (len(matched) / len(required_skills)) * 100
+
+    match_percent = round(
+        (float(similarity) * 70) +
+        (skill_score * 0.30),
+        1
+    )
 
     return {
         "match_percent": match_percent,
         "matched_skills": matched,
         "missing_skills": missing[:5],
     }
+
 
 feedback_prompt = PromptTemplate(
     input_variables=["role", "matched_skills", "missing_skills", "match_percent"],
@@ -213,7 +262,6 @@ def save_resume_analysis(
         session.close()
 
 
-        
 @router.post("/scan")
 async def scan_resume(
     student_id: int = Form(...),
@@ -248,17 +296,18 @@ async def scan_resume(
 
     try:
         feedback = await feedback_chain.ainvoke(
-        {
-            "role": target_role,
-            "matched_skills": ", ".join(match_result["matched_skills"]),
-            "missing_skills": ", ".join(match_result["missing_skills"]),
-            "match_percent": match_result["match_percent"]
-        }
-    )
+            {
+                "role": target_role,
+                "matched_skills": ", ".join(match_result["matched_skills"]),
+                "missing_skills": ", ".join(match_result["missing_skills"]),
+                "match_percent": match_result["match_percent"]
+            }
+        )
 
     except Exception as e:
         print("Feedback Error:", e)
         feedback = "AI feedback temporarily unavailable."
+
     print("\n========== SAVING RESUME ==========")
     print("Student ID:", student_id)
     print("Role:", target_role)

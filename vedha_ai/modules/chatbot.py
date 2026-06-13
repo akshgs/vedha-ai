@@ -341,7 +341,11 @@ async def chat(data: ChatRequest):
         )
 
     except Exception as e:
-        reply = f"Error: {str(e)}"
+        print("\n========== CHAT ERROR ==========")
+        print(type(e))
+        print(str(e))
+        print("================================")
+        reply = "Chat service unavailable"
 
     save_message(
         data.student_id,

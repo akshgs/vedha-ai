@@ -138,6 +138,26 @@ async def scrape_technopark_jobs() -> List[Dict]:
         print(f"Technopark scrape error: {e}")
     return jobs
 
+def get_latest_resume(student_id):
+    session = get_connection()
+
+    try:
+        result = session.execute(
+            text("""
+                SELECT *
+                FROM resume_analysis
+                WHERE student_id = :id
+                ORDER BY id DESC
+                LIMIT 1
+            """),
+            {"id": student_id}
+        ).fetchone()
+
+        return result
+
+    finally:
+        session.close()
+
 # ═══════════════════════════════════════════════
 # SAVE TO DATABASE
 # ═══════════════════════════════════════════════
@@ -171,25 +191,31 @@ def save_jobs(jobs: List[Dict]) -> int:
 # ═══════════════════════════════════════════════
 
 async def run_all_scrapers() -> Dict:
+
     print("🔍 Starting job scrapers...")
+
     init_jobs_table()
 
-    github_jobs     = await scrape_github_trending()
-    remotive_jobs   = await scrape_remotive_jobs()
+    remotive_jobs = await scrape_remotive_jobs()
     technopark_jobs = await scrape_technopark_jobs()
 
-    all_jobs = github_jobs + remotive_jobs + technopark_jobs
-    saved    = save_jobs(all_jobs)
+    all_jobs = (
+        remotive_jobs +
+        technopark_jobs
+    )
+
+    saved = save_jobs(all_jobs)
 
     result = {
-        "github":     len(github_jobs),
-        "remotive":   len(remotive_jobs),
+        "remotive": len(remotive_jobs),
         "technopark": len(technopark_jobs),
-        "total":      len(all_jobs),
-        "saved":      saved,
-        "timestamp":  datetime.utcnow().isoformat()
+        "total": len(all_jobs),
+        "saved": saved,
+        "timestamp": datetime.utcnow().isoformat()
     }
+
     print(f"✅ Scraping done: {result}")
+
     return result
 
 # ═══════════════════════════════════════════════
@@ -243,64 +269,116 @@ async def get_jobs(
 
 @router.get("/jobs/match/{student_id}")
 async def match_jobs_to_student(student_id: int):
+
     session = get_connection()
+
     try:
         student = session.execute(
-            text("SELECT skills FROM students WHERE id = :id"),
+            text(
+                "SELECT skills FROM students WHERE id = :id"
+            ),
             {"id": student_id}
         ).fetchone()
+
         if not student:
-            return {"error": "Student not found"}
-        student_skills = json.loads(student.skills or "[]")
+            return {
+                "error": "Student not found"
+            }
+
+        student_skills = json.loads(
+            student.skills or "[]"
+        )
+
         rows = session.execute(
-            text("SELECT * FROM job_listings ORDER BY scraped_at DESC LIMIT 50")
+            text("""
+                SELECT *
+                FROM job_listings
+                ORDER BY scraped_at DESC
+                LIMIT 50
+            """)
         ).fetchall()
+
     finally:
         session.close()
 
     results = []
+
     for r in rows:
-        job_skills = json.loads(r.skills) if r.skills else []
-        matched    = len([s for s in job_skills if s in student_skills])
-        match_pct  = int((matched / max(len(job_skills), 1)) * 100)
+
+        job_skills = (
+            json.loads(r.skills)
+            if r.skills
+            else []
+        )
+
+        student_set = {
+            s.lower().strip()
+            for s in student_skills
+        }
+
+        job_set = {
+            s.lower().strip()
+            for s in job_skills
+        }
+
+        matched = len(
+            student_set.intersection(job_set)
+        )
+
+        match_pct = int(
+            (matched / max(len(job_set), 1)) * 100
+        )
+
         results.append({
-            "id":            r.id,
-            "title":         r.title,
-            "company":       r.company,
-            "location":      r.location,
-            "skills":        job_skills,
-            "salary":        r.salary,
-            "source":        r.source,
-            "url":           r.url,
+            "id": r.id,
+            "title": r.title,
+            "company": r.company,
+            "location": r.location,
+            "skills": job_skills,
+            "salary": r.salary,
+            "source": r.source,
+            "url": r.url,
             "match_percent": match_pct
         })
-    results.sort(key=lambda x: x["match_percent"], reverse=True)
+
+    results.sort(
+        key=lambda x: x["match_percent"],
+        reverse=True
+    )
+
     return {
-        "student_id":     student_id,
+        "student_id": student_id,
         "student_skills": student_skills,
-        "matched_jobs":   results[:10],
-        "total":          len(results)
+        "matched_jobs": results[:10],
+        "total": len(results)
     }
-
-
 @router.get("/stats")
-async def scraper_stats():
+async def get_job_stats():
+
     session = get_connection()
+
     try:
-        total = session.execute(
+        total_jobs = session.execute(
             text("SELECT COUNT(*) FROM job_listings")
         ).scalar()
-        by_source = session.execute(text("""
-            SELECT source, COUNT(*) as cnt
-            FROM job_listings GROUP BY source
-        """)).fetchall()
-        last_scraped = session.execute(
-            text("SELECT MAX(scraped_at) FROM job_listings")
-        ).scalar()
+
+        source_rows = session.execute(
+            text("""
+                SELECT source, COUNT(*) as count
+                FROM job_listings
+                GROUP BY source
+            """)
+        ).fetchall()
+
+        by_source = {
+            row.source: row.count
+            for row in source_rows
+        }
+
+        return {
+            "total_jobs": total_jobs,
+            "by_source": by_source
+        }
+
     finally:
         session.close()
-    return {
-        "total_jobs":   total,
-        "by_source":    {r.source: r.cnt for r in by_source},
-        "last_scraped": str(last_scraped) if last_scraped else "Never"
-    }

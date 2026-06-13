@@ -66,51 +66,119 @@ class SubmitRequest(BaseModel):
 
 @router.post("/submit")
 def submit_quiz(data: SubmitRequest):
+
     if data.topic not in QUESTIONS:
-        raise HTTPException(status_code=400, detail="Invalid topic!")
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid topic!"
+        )
 
     questions = QUESTIONS[data.topic]
-    correct   = 0
-    results   = []
+
+    correct = 0
+    results = []
 
     for q in questions:
+
         q_id = str(q["id"])
+
         if q_id not in data.answers:
             continue
-        user_ans    = data.answers[q_id]
+
+        user_ans = data.answers[q_id]
         correct_ans = q["answer"]
-        if not isinstance(user_ans, int) or not (0 <= user_ans < len(q["options"])):
-            raise HTTPException(status_code=422,
-                detail=f"Invalid answer index for question {q_id}: {user_ans}")
+
+        if not isinstance(user_ans, int) or not (
+            0 <= user_ans < len(q["options"])
+        ):
+            raise HTTPException(
+                status_code=422,
+                detail=f"Invalid answer index for question {q_id}: {user_ans}"
+            )
+
         is_correct = user_ans == correct_ans
+
         if is_correct:
             correct += 1
+
         results.append({
-            "question":       q["question"],
-            "your_answer":    q["options"][user_ans],
+            "question": q["question"],
+            "your_answer": q["options"][user_ans],
             "correct_answer": q["options"][correct_ans],
-            "is_correct":     is_correct
+            "is_correct": is_correct
         })
 
-    total     = len(results)
-    score_pct = int((correct / total) * 100) if total > 0 else 0
+    total = len(results)
+
+    score_pct = (
+        int((correct / total) * 100)
+        if total > 0
+        else 0
+    )
 
     session = get_connection()
+
     try:
+
+        # Update student score
         session.execute(
-            text("UPDATE students SET quiz_score = :score WHERE id = :id"),
-            {"score": score_pct, "id": data.student_id}
+            text("""
+            UPDATE students
+            SET quiz_score = :score
+            WHERE id = :id
+            """),
+            {
+                "score": score_pct,
+                "id": data.student_id
+            }
         )
+
+        # Save quiz history
+        session.execute(
+            text("""
+            INSERT INTO quiz_results (
+                student_id,
+                topic,
+                score,
+                created_at
+            )
+            VALUES (
+                :student_id,
+                :topic,
+                :score,
+                NOW()
+            )
+            """),
+            {
+                "student_id": data.student_id,
+                "topic": data.topic,
+                "score": score_pct
+            }
+        )
+
         session.commit()
-    except Exception:
+
+    except Exception as e:
+
         session.rollback()
-        raise HTTPException(status_code=500, detail="Database error! Score could not be saved.")
+
+        print("Quiz Save Error:", e)
+
+        raise HTTPException(
+            status_code=500,
+            detail="Database error! Score could not be saved."
+        )
+
     finally:
+
         session.close()
 
     return {
-        "student_id": data.student_id, "topic": data.topic,
-        "correct": correct, "total": total,
-        "score": score_pct, "grade": get_grade(score_pct),
+        "student_id": data.student_id,
+        "topic": data.topic,
+        "correct": correct,
+        "total": total,
+        "score": score_pct,
+        "grade": get_grade(score_pct),
         "results": results
     }

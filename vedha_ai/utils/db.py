@@ -1,4 +1,3 @@
-# utils/db.py — Updated for PostgreSQL
 import os
 from sqlalchemy import create_engine, text, Column, Integer, String, Float, DateTime, Text
 from sqlalchemy.orm import sessionmaker, DeclarativeBase
@@ -70,6 +69,25 @@ class ResumeAnalysis(Base):
 
     created_at = Column(DateTime, default=datetime.utcnow)
 
+class InterviewResult(Base):
+    __tablename__ = "interview_results"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    student_id = Column(Integer, index=True)
+
+    role = Column(String(100))
+
+    question = Column(Text)
+
+    overall_score = Column(Float)
+
+    transcript = Column(Text)
+
+    created_at = Column(DateTime, default=datetime.utcnow) 
+    
+    
+    
     
 # ─── Helpers ──────────────────────────────────────
 def get_db():

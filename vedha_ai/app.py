@@ -19,6 +19,15 @@ from modules.predictit_skill import router as predict_router
 from modules.scraper import router as scraper_router, init_jobs_table
 from modules.resume_scanner import router as resume_router
 from modules.agent_workflow import router as agent_router
+from modules import roadmap_generator
+from modules.dashboard import router as dashboard_router
+from modules.job_recommendation import router as job_router
+from modules.placement_engine import router as placement_router
+
+
+
+
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -57,9 +66,10 @@ app.include_router(leetcode_router,      prefix="/api/leetcode",      tags=["Lee
 app.include_router(predict_router,       prefix="/api/predict",       tags=["ML Predictions"])
 app.include_router(scraper_router,       prefix="/api/scraper",       tags=["Scraper"])
 app.include_router(agent_router,          prefix="/api/agent",          tags=["Agent"])
-app.include_router(resume_router,        prefix="/api/resume",        tags=["Resume"])
-
-
+app.include_router(roadmap_generator.router, prefix="/api/roadmap", tags=["Roadmap"])
+app.include_router(dashboard_router, prefix="/api/dashboard", tags=["Dashboard"])
+app.include_router(job_router, prefix="/api/jobs", tags=["Job Recommendations"])
+app.include_router(placement_router, prefix="/api/placement", tags=["Placement"])
 
 app.include_router(
     agent_router,
