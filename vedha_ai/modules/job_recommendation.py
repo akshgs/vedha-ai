@@ -1,28 +1,36 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import text
+from sentence_transformers import SentenceTransformer
+from sklearn.metrics.pairwise import cosine_similarity
+import numpy as np
 import json
 
 from utils.db import get_connection
 
 router = APIRouter()
 
+# Load once at startup
+embedding_model = SentenceTransformer(
+    "BAAI/bge-small-en-v1.5"
+)
+
 
 class JobRecommendationRequest(BaseModel):
     student_id: int
 
 
-def get_latest_resume(student_id):
+def get_latest_resume(student_id: int):
     session = get_connection()
 
     try:
         result = session.execute(
             text("""
-            SELECT *
-            FROM resume_analysis
-            WHERE student_id = :id
-            ORDER BY id DESC
-            LIMIT 1
+                SELECT matched_skills
+                FROM resume_analysis
+                WHERE student_id = :id
+                ORDER BY id DESC
+                LIMIT 1
             """),
             {"id": student_id}
         ).fetchone()
@@ -39,8 +47,13 @@ def get_jobs():
     try:
         jobs = session.execute(
             text("""
-            SELECT *
-            FROM job_listings
+                SELECT
+                    id,
+                    title,
+                    company,
+                    location,
+                    skills
+                FROM job_listings
             """)
         ).fetchall()
 
@@ -50,35 +63,43 @@ def get_jobs():
         session.close()
 
 
-def calculate_match(resume_skills, job_skills):
+def calculate_match(
+    resume_embedding: np.ndarray,
+    job_skills: list[str]
+) -> float:
 
-    resume_set = {
-        skill.lower().strip()
-        for skill in resume_skills
-    }
+    if not job_skills:
+        return 0.0
 
-    job_set = {
-        skill.lower().strip()
-        for skill in job_skills
-    }
+    job_text = " ".join(job_skills)
 
-    if len(job_set) == 0:
-        return 0
+    job_embedding = embedding_model.encode(
+        job_text,
+        convert_to_numpy=True,
+        normalize_embeddings=True
+    )
 
-    matched = resume_set.intersection(job_set)
+    similarity = cosine_similarity(
+        [resume_embedding],
+        [job_embedding]
+    )[0][0]
 
     score = round(
-        (len(matched) / len(job_set)) * 100,
+        float(similarity) * 100,
         1
     )
 
-    return score
+    return max(0.0, min(score, 100.0))
 
 
 @router.post("/recommend")
-async def recommend_jobs(data: JobRecommendationRequest):
+async def recommend_jobs(
+    data: JobRecommendationRequest
+):
 
-    resume = get_latest_resume(data.student_id)
+    resume = get_latest_resume(
+        data.student_id
+    )
 
     if not resume:
         raise HTTPException(
@@ -86,11 +107,40 @@ async def recommend_jobs(data: JobRecommendationRequest):
             detail="Resume analysis not found"
         )
 
-    matched_skills = json.loads(
-        resume.matched_skills
-    )
+    try:
+        matched_skills = json.loads(
+            resume.matched_skills
+        )
+
+        if not isinstance(
+            matched_skills,
+            list
+        ):
+            matched_skills = []
+
+    except Exception:
+        matched_skills = []
+
+    if len(matched_skills) == 0:
+        raise HTTPException(
+            status_code=400,
+            detail="No skills found in resume"
+        )
 
     jobs = get_jobs()
+
+    # Generate once
+    resume_text = " ".join(
+        skill.strip()
+        for skill in matched_skills
+        if skill and skill.strip()
+    )
+
+    resume_embedding = embedding_model.encode(
+        resume_text,
+        convert_to_numpy=True,
+        normalize_embeddings=True
+    )
 
     recommendations = []
 
@@ -102,10 +152,11 @@ async def recommend_jobs(data: JobRecommendationRequest):
             job_skills = [
                 skill.strip()
                 for skill in job.skills.split(",")
+                if skill.strip()
             ]
 
         score = calculate_match(
-            matched_skills,
+            resume_embedding,
             job_skills
         )
 

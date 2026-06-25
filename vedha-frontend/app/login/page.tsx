@@ -1,6 +1,6 @@
 // app/login/page.tsx — Premium Glassmorphic Login & Register
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { authAPI } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
@@ -29,6 +29,14 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export default function LoginPage() {
+  useEffect(() => {
+    document.body.classList.remove("light-theme");
+    document.body.classList.add("dark-theme");
+    return () => {
+      document.body.classList.remove("dark-theme");
+    };
+  }, []);
+
   const { message } = App.useApp();
   const router = useRouter();
   const setAuth = useAuthStore((s) => s.setAuth);

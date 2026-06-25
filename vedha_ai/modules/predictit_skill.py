@@ -8,10 +8,15 @@ from datetime import datetime
 from fastapi import APIRouter
 import mlflow
 import mlflow.sklearn
-from sklearn.ensemble import RandomForestRegressor
+from xgboost import XGBRegressor
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_absolute_error, r2_score
-from sklearn.preprocessing import LabelEncoder
+from sklearn.metrics import (
+    mean_absolute_error,
+    mean_squared_error,
+    mean_absolute_percentage_error,
+    r2_score,
+)
+from sklearn.preprocessing import  OrdinalEncoder
 import joblib
 from dotenv import load_dotenv
 
@@ -145,11 +150,17 @@ def load_data() -> pd.DataFrame:
 # ═══════════════════════════════════════════════
 
 def engineer_features_predictive(df: pd.DataFrame) -> tuple:
-    # Predictive mode: use current data to predict NEXT period demand
-    # Requires 2+ data points per skill
+    """Predictive mode: use current data to predict NEXT period demand.
+    Requires 2+ data points per skill."""
     df = df.copy()
-    le = LabelEncoder()
-    df["skill_encoded"] = le.fit_transform(df["skill"])
+
+    skill_categories = sorted(df["skill"].unique().tolist())
+    enc = OrdinalEncoder(
+        categories=[skill_categories],
+        handle_unknown="use_encoded_value",
+        unknown_value=-1
+    )
+    df["skill_encoded"] = enc.fit_transform(df[["skill"]])
 
     feature_columns = ["skill_encoded", "pypi_downloads", "github_stars", "month", "week"]
 
@@ -159,19 +170,25 @@ def engineer_features_predictive(df: pd.DataFrame) -> tuple:
     if len(df) == 0:
         return None, None, None
 
-    return df[feature_columns].values, df["next_demand"].values, le
+    return df[feature_columns].values, df["next_demand"].values, enc
 
 
 def engineer_features_baseline(df: pd.DataFrame) -> tuple:
-    # Baseline mode: predict current demand score
-    # Works with just 1 data point per skill (first run)
+    """Baseline mode: predict current demand score.
+    Works with just 1 data point per skill (first run)."""
     df = df.copy()
-    le = LabelEncoder()
-    df["skill_encoded"] = le.fit_transform(df["skill"])
+
+    skill_categories = sorted(df["skill"].unique().tolist())
+    enc = OrdinalEncoder(
+        categories=[skill_categories],
+        handle_unknown="use_encoded_value",
+        unknown_value=-1
+    )
+    df["skill_encoded"] = enc.fit_transform(df[["skill"]])
 
     feature_columns = ["skill_encoded", "pypi_downloads", "github_stars", "month", "week"]
 
-    return df[feature_columns].values, df["demand_score"].values, le
+    return df[feature_columns].values, df["demand_score"].values, enc
 
 
 # ═══════════════════════════════════════════════
@@ -182,32 +199,54 @@ def train_model(X, y, mode: str = "baseline") -> dict:
     mlflow.set_experiment("vedha_ai_skill_predictor")
 
     with mlflow.start_run():
-        params = {"n_estimators": 100, "max_depth": 5, "random_state": 42}
+        params = {
+            "n_estimators": 300,
+            "learning_rate": 0.05,
+            "max_depth": 6,
+            "subsample": 0.8,
+            "colsample_bytree": 0.8,
+            "random_state": 42,
+            "n_jobs": -1,
+        }
         mlflow.log_params({**params, "mode": mode})
 
-        model = RandomForestRegressor(**params)
+        model = XGBRegressor(
+            **params,
+            objective="reg:squarederror",
+            tree_method="hist",
+        )
 
-        # Split only if enough samples
         if len(X) >= 5:
             X_train, X_test, y_train, y_test = train_test_split(
                 X, y, test_size=0.2, random_state=42
             )
-            model.fit(X_train, y_train)
+            model.fit(
+                X_train,
+                y_train,
+                eval_set=[(X_test, y_test)],
+                verbose=False,
+            )
             y_pred = model.predict(X_test)
-            mae = round(float(mean_absolute_error(y_test, y_pred)), 3)
-            r2 = round(float(r2_score(y_test, y_pred)), 3)
+            mae  = round(float(mean_absolute_error(y_test, y_pred)), 3)
+            rmse = round(float(np.sqrt(mean_squared_error(y_test, y_pred))), 3)
+            mape = round(float(mean_absolute_percentage_error(y_test, y_pred)), 3)
+            r2   = round(float(r2_score(y_test, y_pred)), 3)
             n_train = len(X_train)
         else:
-            # Train on all data — not enough for split
+            # Not enough samples for a split — train on everything
             model.fit(X, y)
-            mae = 0.0
-            r2 = 1.0
+            mae     = 0.0
+            rmse    = 0.0
+            mape    = 0.0
+            r2      = 1.0
             n_train = len(X)
 
         mlflow.log_metric("mae", mae)
+        mlflow.log_metric("rmse", rmse)
+        mlflow.log_metric("mape", mape)
         mlflow.log_metric("r2_score", r2)
 
-        importances = model.feature_importances_
+        importances  = model.feature_importances_
         feature_names = ["skill", "pypi_downloads", "github_stars", "month", "week"]
         importance_dict = dict(zip(feature_names, importances.tolist()))
 
@@ -216,10 +255,12 @@ def train_model(X, y, mode: str = "baseline") -> dict:
 
     return {
         "mae": mae,
+        "rmse": rmse,
+        "mape": mape,
         "r2_score": r2,
         "feature_importance": importance_dict,
         "training_samples": n_train,
-        "model": model
+        "model": model,
     }
 
 
@@ -245,27 +286,28 @@ def predict_skill_demand(skill: str, pypi_downloads: int, github_stars: int) -> 
     if model is None:
         return {"error": "Model not trained! Call POST /api/predict/train first"}
 
-    if skill not in encoder.classes_:
+    known_skills = encoder.categories_[0].tolist()
+    if skill not in known_skills:
         return {"error": f"Unknown skill: {skill}"}
 
-    skill_encoded = encoder.transform([skill])[0]
+    skill_encoded = encoder.transform(pd.DataFrame({"skill": [skill]}))[0][0]
     month = datetime.now().month
-    week = datetime.now().isocalendar()[1]
+    week  = datetime.now().isocalendar()[1]
 
     features = np.array([[skill_encoded, pypi_downloads, github_stars, month, week]])
     predicted_score = round(float(model.predict(features)[0]), 2)
 
     if predicted_score >= 75:
-        trend = "🔥 Very Hot — High demand expected"
+        trend          = "🔥 Very Hot — High demand expected"
         recommendation = "Learn this skill immediately!"
     elif predicted_score >= 50:
-        trend = "📈 Growing — Good demand"
+        trend          = "📈 Growing — Good demand"
         recommendation = "Good investment of your time"
     elif predicted_score >= 25:
-        trend = "→ Stable — Moderate demand"
+        trend          = "→ Stable — Moderate demand"
         recommendation = "Useful but not urgent"
     else:
-        trend = "📉 Declining — Lower demand"
+        trend          = "📉 Declining — Lower demand"
         recommendation = "Focus on other skills first"
 
     return {
@@ -273,7 +315,7 @@ def predict_skill_demand(skill: str, pypi_downloads: int, github_stars: int) -> 
         "predicted_demand_score": predicted_score,
         "trend": trend,
         "recommendation": recommendation,
-        "based_on": {"pypi_downloads": pypi_downloads, "github_stars": github_stars}
+        "based_on": {"pypi_downloads": pypi_downloads, "github_stars": github_stars},
     }
 
 
@@ -285,7 +327,6 @@ def predict_skill_demand(skill: str, pypi_downloads: int, github_stars: int) -> 
 async def train_skill_predictor():
     print("Starting ML pipeline...")
 
-    # Step 1: Collect live data from GitHub + PyPI
     data_points = await collect_live_data()
     if not data_points:
         return {"error": "Could not collect live data!"}
@@ -293,21 +334,16 @@ async def train_skill_predictor():
     save_data(data_points)
     df = load_data()
 
-    # Step 2: Try predictive mode first (needs 2+ points per skill)
     X, y, encoder = engineer_features_predictive(df)
     mode = "predictive"
 
     if X is None or len(X) == 0:
-        # First run — use baseline mode
         print("Switching to baseline mode (need more data for predictive)...")
         X, y, encoder = engineer_features_baseline(df)
         mode = "baseline"
 
-    # Step 3: Train RandomForest with MLflow tracking
     result = train_model(X, y, mode=mode)
     trained_model = result.pop("model")
-
-    # Step 4: Save model to disk
     save_model(trained_model, encoder)
 
     return {
@@ -321,7 +357,7 @@ async def train_skill_predictor():
         "data_points_total": len(df),
         "metrics": result,
         "mlflow_tracked": True,
-        "next": "GET /api/predict/top-skills to see predictions!"
+        "next": "GET /api/predict/top-skills to see predictions!",
     }
 
 
@@ -352,7 +388,7 @@ async def predict_all_skills():
         "predictions": predictions,
         "total_skills": len(predictions),
         "generated_at": datetime.now().isoformat(),
-        "message": "Live ML predictions for Kerala IT market 2026"
+        "message": "Live ML predictions for Kerala IT market 2026",
     }
 
 
@@ -366,7 +402,6 @@ async def get_top_skills():
     if df.empty:
         return {"error": "No data available!"}
 
-    # Use latest data point per skill
     latest = df.sort_values("timestamp").groupby("skill").last().reset_index()
 
     predictions = []
@@ -374,7 +409,7 @@ async def get_top_skills():
         result = predict_skill_demand(
             row["skill"],
             int(row["pypi_downloads"]),
-            int(row["github_stars"])
+            int(row["github_stars"]),
         )
         if "error" not in result:
             predictions.append(result)
@@ -389,18 +424,18 @@ async def get_top_skills():
                 "skill": p["skill"],
                 "demand_score": p["predicted_demand_score"],
                 "trend": p["trend"],
-                "action": p["recommendation"]
+                "action": p["recommendation"],
             }
             for i, p in enumerate(top_5)
         ],
-        "generated_at": datetime.now().isoformat()
+        "generated_at": datetime.now().isoformat(),
     }
 
 
 @router.get("/model-status")
 def get_model_status():
     model_exists = os.path.exists(MODEL_PATH)
-    data_points = 0
+    data_points  = 0
 
     if os.path.exists(DATA_PATH):
         with open(DATA_PATH) as f:
@@ -415,5 +450,5 @@ def get_model_status():
             "Model ready! Use /predict-all or /top-skills"
             if model_exists
             else "Call POST /train to start!"
-        )
+        ),
     }

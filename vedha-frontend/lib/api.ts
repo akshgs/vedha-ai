@@ -70,15 +70,20 @@ export const leaderboardAPI = {
 export const jobsAPI = {
   getJobs: (params?: { source?: string; job_type?: string; limit?: number }) =>
     api.get("/api/scraper/jobs", { params }),
+
   matchJobs: (student_id: number) =>
     api.get(`/api/scraper/jobs/match/${student_id}`),
+
   scrape: () => api.post("/api/scraper/scrape"),
+
   stats: () => api.get("/api/scraper/stats"),
 };
 
 // ── Trends ────────────────────────────────────
 export const trendsAPI = {
   getTrends: () => api.get("/api/trends/trends"),
+  refresh: () => api.get("/api/trends/refresh"),
+  getSkillDemand: () => api.get("/api/trends/skills"),
 };
 
 // ── Opportunities ─────────────────────────────
@@ -129,4 +134,45 @@ export const agentAPI = {
     target_role: string;
   }) =>
     api.post("/api/agents/career-analysis", data),
+};
+
+// ── Knowledge Base ────────────────────────────
+export const knowledgeAPI = {
+  addText: (data: { text: string; label?: string }) =>
+    api.post("/api/knowledge/add_text", data),
+  uploadPdf: (formData: FormData) =>
+    api.post("/api/knowledge/upload_pdf", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    }),
+  uploadText: (formData: FormData) =>
+    api.post("/api/knowledge/upload_text", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    }),
+  search: (data: { question: string; top_k?: number }) =>
+    api.post("/api/knowledge/search", data),
+  stats: () => api.get("/api/knowledge/stats"),
+};
+
+// ── Dashboard Stats ───────────────────────────
+export const dashboardAPI = {
+  getDashboard: (student_id: number) =>
+    api.get(`/api/dashboard/${student_id}`),
+};
+
+// ── Placement Score ───────────────────────────
+export const placementAPI = {
+  getPlacementScore: (student_id: number) =>
+    api.get(`/api/placement/placement-score/${student_id}`),
+};
+
+// ── Learning Roadmap ──────────────────────────
+export const roadmapAPI = {
+  generate: (data: { student_id: number }) =>
+    api.post("/api/roadmap/generate", data),
+};
+
+// ── Semantic Job Recommendations ──────────────
+export const jobRecommendationAPI = {
+  recommend: (data: { student_id: number }) =>
+    api.post("/api/jobs/recommend", data),
 };

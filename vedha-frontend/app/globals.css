@@ -62,173 +62,218 @@ body {
   animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* AntD Select Options contrast rules */
-.ant-select-dropdown {
+/* AntD Select Options contrast rules under dark-theme */
+.dark-theme .ant-select-dropdown,
+.dark-theme.ant-select-dropdown {
   background-color: #111827 !important; /* Tailwind gray-900 equivalent */
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
-.ant-select-dropdown .ant-select-item {
+.dark-theme .ant-select-dropdown .ant-select-item,
+.dark-theme.ant-select-dropdown .ant-select-item {
   color: rgba(255, 255, 255, 0.85) !important;
 }
 
-.ant-select-dropdown .ant-select-item-option-selected {
+.dark-theme .ant-select-dropdown .ant-select-item-option-selected,
+.dark-theme.ant-select-dropdown .ant-select-item-option-selected {
   background-color: rgba(99, 102, 241, 0.25) !important;
   color: #ffffff !important;
 }
 
-.ant-select-dropdown .ant-select-item-option-active {
+.dark-theme .ant-select-dropdown .ant-select-item-option-active,
+.dark-theme.ant-select-dropdown .ant-select-item-option-active {
   background-color: rgba(255, 255, 255, 0.08) !important;
   color: #ffffff !important;
 }
 
-/* AntD Inputs theme color corrections */
-.ant-input-affix-wrapper, .ant-input, .ant-select-selector {
+/* AntD Inputs theme color corrections under dark-theme */
+.dark-theme .ant-input-affix-wrapper, 
+.dark-theme .ant-input, 
+.dark-theme .ant-select-selector {
   background-color: rgba(255, 255, 255, 0.08) !important; /* increased opacity */
   border-color: rgba(255, 255, 255, 0.15) !important;
   color: #ffffff !important;
 }
 
-.ant-input-affix-wrapper:hover, .ant-input:hover, .ant-select-selector:hover {
+.dark-theme .ant-input-affix-wrapper:hover, 
+.dark-theme .ant-input:hover, 
+.dark-theme .ant-select-selector:hover {
   border-color: #6366f1 !important;
 }
 
-.ant-input-affix-wrapper-focused, .ant-input:focus, .ant-select-focused .ant-select-selector {
+.dark-theme .ant-input-affix-wrapper-focused, 
+.dark-theme .ant-input:focus, 
+.dark-theme .ant-select-focused .ant-select-selector {
   border-color: #6366f1 !important;
   box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2) !important;
 }
 
-/* AntD Select specific label & icon overrides */
-.ant-select-selection-placeholder {
+/* AntD Select specific label & icon overrides under dark-theme */
+.dark-theme .ant-select-selection-placeholder {
   color: rgba(255, 255, 255, 0.5) !important; /* highly visible placeholder */
 }
 
-.ant-select-selection-item {
+.dark-theme .ant-select-selection-item {
   color: #ffffff !important;
 }
 
-.ant-select-arrow {
+.dark-theme .ant-select-arrow {
   color: rgba(255, 255, 255, 0.6) !important;
 }
 
-/* AntD Table styling and contrast corrections */
-.ant-table {
+/* AntD Table styling and contrast corrections under dark-theme */
+.dark-theme .ant-table {
   background: transparent !important;
   color: rgba(255, 255, 255, 0.85) !important;
 }
 
-.ant-table-thead > tr > th {
+.dark-theme .ant-table-thead > tr > th {
   background: rgba(255, 255, 255, 0.04) !important;
   color: rgba(255, 255, 255, 0.9) !important;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
   font-weight: 600 !important;
 }
 
-.ant-table-tbody > tr > td {
+.dark-theme .ant-table-tbody > tr > td {
   color: rgba(255, 255, 255, 0.8) !important;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
 }
 
-.ant-table-tbody > tr:hover > td {
+.dark-theme .ant-table-tbody > tr:hover > td {
   background: rgba(255, 255, 255, 0.03) !important;
 }
 
-.ant-table-placeholder {
+.dark-theme .ant-table-placeholder {
   background: transparent !important;
 }
 
-.ant-table-placeholder .ant-empty-description {
+.dark-theme .ant-table-placeholder .ant-empty-description {
   color: rgba(255, 255, 255, 0.6) !important;
 }
 
-/* Pagination styles */
-.ant-pagination-item {
+/* Pagination styles under dark-theme */
+.dark-theme .ant-pagination-item {
   background: rgba(255, 255, 255, 0.02) !important;
   border-color: rgba(255, 255, 255, 0.1) !important;
 }
 
-.ant-pagination-item a {
+.dark-theme .ant-pagination-item a {
   color: rgba(255, 255, 255, 0.7) !important;
 }
 
-.ant-pagination-item:hover {
+.dark-theme .ant-pagination-item:hover {
   border-color: #6366f1 !important;
 }
 
-.ant-pagination-item:hover a {
+.dark-theme .ant-pagination-item:hover a {
   color: #6366f1 !important;
 }
 
-.ant-pagination-item-active {
+.dark-theme .ant-pagination-item-active {
   background: rgba(99, 102, 241, 0.25) !important;
   border-color: #6366f1 !important;
 }
 
-.ant-pagination-item-active a {
+.dark-theme .ant-pagination-item-active a {
   color: #ffffff !important;
 }
 
-.ant-pagination-prev .ant-pagination-item-link,
-.ant-pagination-next .ant-pagination-item-link {
+.dark-theme .ant-pagination-prev .ant-pagination-item-link,
+.dark-theme .ant-pagination-next .ant-pagination-item-link {
   background: rgba(255, 255, 255, 0.02) !important;
   border-color: rgba(255, 255, 255, 0.1) !important;
   color: rgba(255, 255, 255, 0.7) !important;
 }
 
-.ant-pagination-prev:hover .ant-pagination-item-link,
-.ant-pagination-next:hover .ant-pagination-item-link {
+.dark-theme .ant-pagination-prev:hover .ant-pagination-item-link,
+.dark-theme .ant-pagination-next:hover .ant-pagination-item-link {
   border-color: #6366f1 !important;
   color: #6366f1 !important;
 }
 
-/* Badge Status text */
-.ant-badge-status-text {
+/* Badge Status text under dark-theme */
+.dark-theme .ant-badge-status-text {
   color: rgba(255, 255, 255, 0.8) !important;
 }
 
-/* Checkbox and inputs styling */
-.ant-checkbox-inner {
+/* Checkbox and inputs styling under dark-theme */
+.dark-theme .ant-checkbox-inner {
   background-color: rgba(255, 255, 255, 0.05) !important;
   border-color: rgba(255, 255, 255, 0.15) !important;
 }
 
-.ant-checkbox-checked .ant-checkbox-inner {
+.dark-theme .ant-checkbox-checked .ant-checkbox-inner {
   background-color: #6366f1 !important;
   border-color: #6366f1 !important;
 }
 
-.ant-input::placeholder {
+.dark-theme .ant-input::placeholder {
   color: rgba(255, 255, 255, 0.4) !important;
 }
 
-/* Modal text corrections */
-.ant-modal-content {
+/* Modal text corrections under dark-theme */
+.dark-theme .ant-modal-content {
   background-color: #0f172a !important; /* Slate 900 */
   color: #ffffff !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
-.ant-modal-header {
+.dark-theme .ant-modal-header {
   background: transparent !important;
 }
 
-.ant-modal-title {
+.dark-theme .ant-modal-title {
   color: #ffffff !important;
 }
 
-.ant-modal-close {
+.dark-theme .ant-modal-close {
   color: rgba(255, 255, 255, 0.55) !important;
 }
 
-.ant-modal-close:hover {
+.dark-theme .ant-modal-close:hover {
   color: #ffffff !important;
 }
 
-.ant-form-item-label > label {
+.dark-theme .ant-form-item-label > label {
   color: rgba(255, 255, 255, 0.85) !important;
 }
 
-.ant-table-column-sorter {
+.dark-theme .ant-table-column-sorter {
   color: rgba(255, 255, 255, 0.4) !important;
 }
+
+/* Custom design utilities for light-mode Molar AI theme */
+.light-theme {
+  --background: #f4f5f7;
+  --foreground: #0f172a;
+}
+
+.light-theme ::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.02);
+}
+.light-theme ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+}
+.light-theme ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+/* Rounded white panel elements with modern subtle shadows */
+.light-panel {
+  background: #ffffff;
+  border: 1px solid #f1f5f9;
+  border-radius: 24px;
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.03), 0 2px 8px -1px rgba(15, 23, 42, 0.02);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.light-panel:hover {
+  box-shadow: 0 10px 30px -3px rgba(15, 23, 42, 0.05), 0 4px 12px -2px rgba(15, 23, 42, 0.03);
+}
+
+/* Light glow accents */
+.light-glow-indigo {
+  box-shadow: 0 10px 30px -5px rgba(99, 102, 241, 0.12), 0 4px 12px -2px rgba(99, 102, 241, 0.08);
+}
+
 

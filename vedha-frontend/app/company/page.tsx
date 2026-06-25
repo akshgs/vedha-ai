@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/auth-store";
-import { jobsAPI, leaderboardAPI, predictAPI } from "@/lib/api";
+import { jobsAPI, leaderboardAPI, predictAPI, placementAPI } from "@/lib/api";
 import {
   Layout,
   Card,
@@ -64,6 +64,11 @@ export default function CompanyDashboard() {
 
   useEffect(() => {
     setIsMounted(true);
+    document.body.classList.remove("light-theme");
+    document.body.classList.add("dark-theme");
+    return () => {
+      document.body.classList.remove("dark-theme");
+    };
   }, []);
 
   const router = useRouter();
@@ -96,6 +101,10 @@ export default function CompanyDashboard() {
   // Candidate Details Drawer
   const [selectedCandidate, setSelectedCandidate] = useState<any>(null);
   const [detailsVisible, setDetailsVisible] = useState(false);
+
+  // Placement details states
+  const [candidatePlacementStats, setCandidatePlacementStats] = useState<any>(null);
+  const [loadingPlacementStats, setLoadingPlacementStats] = useState(false);
 
   const KERALA_ROLES = [
     "ML Engineer", "Data Scientist", "LLM Engineer", "GenAI Developer",
@@ -219,6 +228,21 @@ export default function CompanyDashboard() {
       message.error("Prediction calculator error.");
     } finally {
       setPlayLoading(false);
+    }
+  };
+
+  const handleOpenCandidateDetails = async (candidate: any) => {
+    setSelectedCandidate(candidate);
+    setDetailsVisible(true);
+    setCandidatePlacementStats(null);
+    setLoadingPlacementStats(true);
+    try {
+      const res = await placementAPI.getPlacementScore(candidate.id);
+      setCandidatePlacementStats(res.data);
+    } catch (e) {
+      console.error("Error fetching candidate placement details", e);
+    } finally {
+      setLoadingPlacementStats(false);
     }
   };
 
@@ -611,10 +635,7 @@ export default function CompanyDashboard() {
                     key: "name",
                     render: (text, record) => (
                       <button
-                        onClick={() => {
-                          setSelectedCandidate(record);
-                          setDetailsVisible(true);
-                        }}
+                        onClick={() => handleOpenCandidateDetails(record)}
                         className="font-bold text-white hover:text-emerald-400 transition-all text-left bg-transparent border-none cursor-pointer"
                       >
                         {text}
@@ -653,10 +674,7 @@ export default function CompanyDashboard() {
                     render: (_, record) => (
                       <Button
                         type="primary"
-                        onClick={() => {
-                          setSelectedCandidate(record);
-                          setDetailsVisible(true);
-                        }}
+                        onClick={() => handleOpenCandidateDetails(record)}
                         className="bg-emerald-600 hover:bg-emerald-500 border-none rounded-lg text-xs font-bold"
                       >
                         Details
@@ -841,6 +859,75 @@ export default function CompanyDashboard() {
                     <strong className="text-white">{selectedCandidate.skill_count} Stacks</strong>
                   </div>
                 </div>
+
+                {/* Placement Engine diagnostics */}
+                {loadingPlacementStats ? (
+                  <div className="border-t border-white/5 pt-4 text-center">
+                    <Loader2 className="animate-spin text-emerald-400 mx-auto" size={20} />
+                    <span className="text-[10px] text-gray-500 block mt-2">Loading Placement Readiness scores...</span>
+                  </div>
+                ) : candidatePlacementStats ? (
+                  <div className="border-t border-white/5 pt-4 space-y-4">
+                    <span className="text-gray-400 block font-bold uppercase tracking-wider text-[10px]">Placement Readiness diagnostics</span>
+                    
+                    <div className="bg-white/[0.02] border border-white/5 p-4 rounded-xl space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-400">Weighted Score:</span>
+                        <strong className="text-emerald-400 text-sm">{candidatePlacementStats.placement_readiness}%</strong>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-400">Readiness Category:</span>
+                        <Tag color="emerald">{candidatePlacementStats.readiness_level}</Tag>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <span className="text-[10px] text-gray-500 block font-bold uppercase">Assessment Breakdown</span>
+                      <div className="grid grid-cols-2 gap-3 text-[10px]">
+                        <div className="bg-white/[0.02] border border-white/5 p-2 rounded-lg text-center">
+                          <span className="text-gray-400 block mb-0.5">Resume (40%)</span>
+                          <strong className="text-white text-xs">{candidatePlacementStats.resume_score}%</strong>
+                        </div>
+                        <div className="bg-white/[0.02] border border-white/5 p-2 rounded-lg text-center">
+                          <span className="text-gray-400 block mb-0.5">Quiz (30%)</span>
+                          <strong className="text-white text-xs">{candidatePlacementStats.quiz_score}%</strong>
+                        </div>
+                        <div className="bg-white/[0.02] border border-white/5 p-2 rounded-lg text-center">
+                          <span className="text-gray-400 block mb-0.5">Interview (20%)</span>
+                          <strong className="text-white text-xs">{candidatePlacementStats.interview_score}%</strong>
+                        </div>
+                        <div className="bg-white/[0.02] border border-white/5 p-2 rounded-lg text-center">
+                          <span className="text-gray-400 block mb-0.5">LeetCode (10%)</span>
+                          <strong className="text-white text-xs">{candidatePlacementStats.leetcode_score}%</strong>
+                        </div>
+                      </div>
+                    </div>
+
+                    {candidatePlacementStats.strengths?.length > 0 && (
+                      <div className="space-y-1.5">
+                        <span className="text-emerald-400 block font-bold uppercase tracking-wider text-[9px]">Verified Strengths</span>
+                        {candidatePlacementStats.strengths.map((str: string, i: number) => (
+                          <div key={i} className="flex items-center gap-2 text-[10px] text-gray-300">
+                            <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
+                            <span>{str}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {candidatePlacementStats.improvement_areas?.length > 0 && (
+                      <div className="space-y-1.5">
+                        <span className="text-amber-400 block font-bold uppercase tracking-wider text-[9px]">Development Opportunities</span>
+                        {candidatePlacementStats.improvement_areas.map((imp: string, i: number) => (
+                          <div key={i} className="flex items-start gap-2 text-[10px] text-gray-300">
+                            <span className="w-1.5 h-1.5 bg-amber-500 rounded-full mt-1 shrink-0" />
+                            <span>{imp}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : null}
 
                 <div className="border-t border-white/5 pt-4 space-y-2">
                   <span className="text-gray-400 block">Candidate actions:</span>

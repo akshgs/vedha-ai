@@ -1,9 +1,28 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from sqlalchemy import text
 
 from utils.db import get_connection
 
 router = APIRouter()
+
+PLACEMENT_WEIGHTS = {
+    "resume": 0.40,
+    "quiz": 0.30,
+    "interview": 0.20,
+    "leetcode": 0.10,
+}
+
+
+def get_readiness_label(score: float) -> str:
+    if score >= 85:
+        return "Excellent"
+    elif score >= 70:
+        return "Strong"
+    elif score >= 55:
+        return "Moderate"
+    elif score >= 40:
+        return "Needs Improvement"
+    return "High Risk"
 
 
 @router.get("/placement-score/{student_id}")
@@ -15,16 +34,22 @@ async def placement_score(student_id: int):
 
         student = session.execute(
             text("""
-            SELECT *
+            SELECT id, full_name
             FROM students
             WHERE id = :id
             """),
             {"id": student_id}
         ).fetchone()
 
+        if not student:
+            raise HTTPException(
+                status_code=404,
+                detail="Student not found"
+            )
+
         resume = session.execute(
             text("""
-            SELECT *
+            SELECT match_percent
             FROM resume_analysis
             WHERE student_id = :id
             ORDER BY id DESC
@@ -47,42 +72,65 @@ async def placement_score(student_id: int):
     finally:
         session.close()
 
-    if not student:
-        return {
-            "error": "Student not found"
-        }
-
     resume_score = (
         float(resume.match_percent)
-        if resume
-        else 0
+        if resume and resume.match_percent is not None
+        else 0.0
     )
 
     quiz_score = (
         float(quiz.score)
-        if quiz
-        else 0
+        if quiz and quiz.score is not None
+        else 0.0
     )
 
-    # Temporary values until those modules are connected
-    interview_score = 0
-    leetcode_score = 0
+    # Future modules
+    interview_score = 0.0
+    leetcode_score = 0.0
 
-    placement_score = round(
+    readiness_score = round(
         (
-            resume_score * 0.4 +
-            quiz_score * 0.3 +
-            interview_score * 0.2 +
-            leetcode_score * 0.1
+            resume_score * PLACEMENT_WEIGHTS["resume"]
+            + quiz_score * PLACEMENT_WEIGHTS["quiz"]
+            + interview_score * PLACEMENT_WEIGHTS["interview"]
+            + leetcode_score * PLACEMENT_WEIGHTS["leetcode"]
         ),
         1
     )
 
+    readiness_level = get_readiness_label(
+        readiness_score
+    )
+
+    strengths = []
+
+    if resume_score >= 70:
+        strengths.append("Resume")
+
+    if quiz_score >= 70:
+        strengths.append("Technical Knowledge")
+
+    improvement_areas = []
+
+    if resume_score < 70:
+        improvement_areas.append(
+            "Improve resume quality and role alignment"
+        )
+
+    if quiz_score < 70:
+        improvement_areas.append(
+            "Improve technical assessment performance"
+        )
+
     return {
         "student_id": student_id,
+        "student_name": student.full_name,
         "resume_score": resume_score,
         "quiz_score": quiz_score,
         "interview_score": interview_score,
         "leetcode_score": leetcode_score,
-        "placement_readiness": placement_score
+        "placement_readiness": readiness_score,
+        "readiness_level": readiness_level,
+        "strengths": strengths,
+        "improvement_areas": improvement_areas
     }

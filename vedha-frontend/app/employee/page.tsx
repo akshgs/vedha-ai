@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/auth-store";
-import { skillsAPI, chatAPI, jobsAPI, leaderboardAPI, predictAPI } from "@/lib/api";
+import { skillsAPI, chatAPI, jobsAPI, leaderboardAPI, predictAPI, knowledgeAPI, trendsAPI } from "@/lib/api";
 import {
   Layout,
   Card,
@@ -23,7 +23,8 @@ import {
   App,
   Switch,
   Statistic,
-  Skeleton
+  Skeleton,
+  Upload
 } from "antd";
 import {
   BarChart,
@@ -60,7 +61,9 @@ import {
   Terminal,
   Activity,
   FileText,
-  UserPlus
+  UserPlus,
+  BookOpen,
+  UploadCloud
 } from "lucide-react";
 
 const { Header, Sider, Content } = Layout;
@@ -71,6 +74,11 @@ export default function EmployeeDashboard() {
 
   useEffect(() => {
     setIsMounted(true);
+    document.body.classList.remove("light-theme");
+    document.body.classList.add("dark-theme");
+    return () => {
+      document.body.classList.remove("dark-theme");
+    };
   }, []);
 
   const router = useRouter();
@@ -104,6 +112,24 @@ export default function EmployeeDashboard() {
   const [chatLoading, setChatLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
+  // Knowledge Base RAG states
+  const [knowledgeStats, setKnowledgeStats] = useState<any>(null);
+  const [loadingKbStats, setLoadingKbStats] = useState(false);
+  const [kbText, setKbText] = useState("");
+  const [kbLabel, setKbLabel] = useState("Manual Entry");
+  const [addingText, setAddingText] = useState(false);
+  const [uploadingPdf, setUploadingPdf] = useState(false);
+  const [uploadingTxt, setUploadingTxt] = useState(false);
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [txtFile, setTxtFile] = useState<File | null>(null);
+  const [searchQueryKb, setSearchQueryKb] = useState("");
+  const [searchResultsKb, setSearchResultsKb] = useState<any[]>([]);
+  const [searchingKb, setSearchingKb] = useState(false);
+
+  // Background jobs states
+  const [trainingModel, setTrainingModel] = useState(false);
+  const [refreshingTrends, setRefreshingTrends] = useState(false);
+
   const ROLES = [
     "ML Engineer", "GenAI Developer", "LLM Engineer", "Full Stack Developer",
     "DevOps Engineer", "Data Scientist", "NLP Engineer", "Cloud Engineer", "Cybersecurity Analyst"
@@ -123,6 +149,7 @@ export default function EmployeeDashboard() {
     }
     fetchUsers();
     fetchStats();
+    fetchKnowledgeStats();
   }, [user]);
 
   useEffect(() => {
@@ -164,6 +191,108 @@ export default function EmployeeDashboard() {
       const mStatus = await predictAPI.modelStatus();
       setModelTrained(mStatus.data?.model_trained || false);
     } catch {}
+  };
+
+  const fetchKnowledgeStats = async () => {
+    setLoadingKbStats(true);
+    try {
+      const res = await knowledgeAPI.stats();
+      setKnowledgeStats(res.data);
+    } catch (e) {
+      console.error("Error loading knowledge base stats", e);
+    } finally {
+      setLoadingKbStats(false);
+    }
+  };
+
+  const handleAddText = async () => {
+    if (kbText.trim().length < 50) return;
+    setAddingText(true);
+    try {
+      const res = await knowledgeAPI.addText({ text: kbText, label: kbLabel });
+      message.success(res.data.message || "Content ingested successfully!");
+      setKbText("");
+      fetchKnowledgeStats();
+    } catch (e: any) {
+      message.error(e.response?.data?.detail || "Ingestion failed.");
+    } finally {
+      setAddingText(false);
+    }
+  };
+
+  const handleUploadPdf = async () => {
+    if (!pdfFile) return;
+    setUploadingPdf(true);
+    const formData = new FormData();
+    formData.append("file", pdfFile);
+    try {
+      const res = await knowledgeAPI.uploadPdf(formData);
+      message.success(res.data.message || "PDF content ingested successfully!");
+      setPdfFile(null);
+      fetchKnowledgeStats();
+    } catch (e: any) {
+      message.error(e.response?.data?.detail || "PDF upload failed.");
+    } finally {
+      setUploadingPdf(false);
+    }
+  };
+
+  const handleUploadTxt = async () => {
+    if (!txtFile) return;
+    setUploadingTxt(true);
+    const formData = new FormData();
+    formData.append("file", txtFile);
+    try {
+      const res = await knowledgeAPI.uploadText(formData);
+      message.success(res.data.message || "TXT content ingested successfully!");
+      setTxtFile(null);
+      fetchKnowledgeStats();
+    } catch (e: any) {
+      message.error(e.response?.data?.detail || "TXT upload failed.");
+    } finally {
+      setUploadingTxt(false);
+    }
+  };
+
+  const handleSearchKb = async () => {
+    if (!searchQueryKb.trim()) return;
+    setSearchingKb(true);
+    setSearchResultsKb([]);
+    try {
+      const res = await knowledgeAPI.search({ question: searchQueryKb, top_k: 4 });
+      setSearchResultsKb(res.data.results || []);
+    } catch (e: any) {
+      message.error(e.response?.data?.detail || "RAG search failed.");
+    } finally {
+      setSearchingKb(false);
+    }
+  };
+
+  const handleRetrainModel = async () => {
+    setTrainingModel(true);
+    message.loading({ content: "Retraining Random Forest model...", key: "retrain_model" });
+    try {
+      await predictAPI.train();
+      message.success({ content: "Forecasting model trained successfully!", key: "retrain_model" });
+      fetchStats();
+    } catch (e) {
+      message.error({ content: "Retraining failed.", key: "retrain_model" });
+    } finally {
+      setTrainingModel(false);
+    }
+  };
+
+  const handleRefreshTrends = async () => {
+    setRefreshingTrends(true);
+    message.loading({ content: "Refreshing tech trends database...", key: "refresh_trends_admin" });
+    try {
+      await trendsAPI.refresh();
+      message.success({ content: "Tech market trends updated successfully!", key: "refresh_trends_admin" });
+    } catch (e) {
+      message.error({ content: "Scraper refresh failed.", key: "refresh_trends_admin" });
+    } finally {
+      setRefreshingTrends(false);
+    }
   };
 
   // User list actions
@@ -269,6 +398,7 @@ export default function EmployeeDashboard() {
           {[
             { id: "home", label: "Dashboard Hub", icon: LayoutDashboard },
             { id: "users", label: "User Management", icon: Users },
+            { id: "knowledge", label: "Knowledge Base", icon: BookOpen, action: fetchKnowledgeStats },
             { id: "monitor", label: "System Monitoring", icon: Activity },
             { id: "roadmap", label: "Switch Planner", icon: Sliders },
             { id: "chat", label: "Upskilling Mentor", icon: RefreshCw }
@@ -281,6 +411,7 @@ export default function EmployeeDashboard() {
                 onClick={() => {
                   setActiveTab(tab.id);
                   setSidebarOpen(false);
+                  if (tab.action) tab.action();
                 }}
                 className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl text-xs font-bold transition-all text-left cursor-pointer ${
                   isActive
@@ -514,44 +645,75 @@ export default function EmployeeDashboard() {
 
           {/* Tab 3: Monitor logs */}
           {activeTab === "monitor" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-fade-in">
-              <Card title="Live Server logs & API Status" className="glass-panel bg-white/5 border-white/10 rounded-3xl">
-                <div className="flex flex-col">
-                  {[
-                    { title: "FastAPI Engine status", desc: "ONLINE", icon: Cpu, color: "text-emerald-400" },
-                    { title: "PostgreSQL Database URL", desc: "CONNECTED (port 5432)", icon: Database, color: "text-emerald-400" },
-                    { title: "RAG Vector FAISS Index", desc: "LOADED FROM DISK (CAREER_KNOWLEDGE loaded)", icon: Database, color: "text-indigo-400" },
-                    { title: "RandomForest forecast Model", desc: modelTrained ? "ACTIVE & SAVED" : "UNINITIALIZED", icon: Sliders, color: modelTrained ? "text-emerald-400" : "text-amber-400" },
-                  ].map((item, idx, arr) => (
-                    <div key={item.title} className={`flex items-start gap-4 py-4 ${idx !== arr.length - 1 ? "border-b border-white/5" : ""}`}>
-                      <item.icon className={`w-8 h-8 ${item.color} shrink-0`} />
-                      <div className="flex-1">
-                        <span className="font-bold text-white text-xs block">{item.title}</span>
-                        <span className="text-gray-400 text-xs block mt-0.5">{item.desc}</span>
+            <div className="space-y-8 animate-fade-in">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <Card title="Live Server logs & API Status" className="glass-panel bg-white/5 border-white/10 rounded-3xl">
+                  <div className="flex flex-col">
+                    {[
+                      { title: "FastAPI Engine status", desc: "ONLINE", icon: Cpu, color: "text-emerald-400" },
+                      { title: "PostgreSQL Database URL", desc: "CONNECTED (port 5432)", icon: Database, color: "text-emerald-400" },
+                      { title: "RAG Vector FAISS Index", desc: "LOADED FROM DISK (CAREER_KNOWLEDGE loaded)", icon: Database, color: "text-indigo-400" },
+                      { title: "RandomForest forecast Model", desc: modelTrained ? "ACTIVE & SAVED" : "UNINITIALIZED", icon: Sliders, color: modelTrained ? "text-emerald-400" : "text-amber-400" },
+                    ].map((item, idx, arr) => (
+                      <div key={item.title} className={`flex items-start gap-4 py-4 ${idx !== arr.length - 1 ? "border-b border-white/5" : ""}`}>
+                        <item.icon className={`w-8 h-8 ${item.color} shrink-0`} />
+                        <div className="flex-1">
+                          <span className="font-bold text-white text-xs block">{item.title}</span>
+                          <span className="text-gray-400 text-xs block mt-0.5">{item.desc}</span>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </Card>
+                    ))}
+                  </div>
+                </Card>
 
-              <Card title="RAG bot top search reports" className="glass-panel bg-white/5 border-white/10 rounded-3xl">
-                <div className="flex flex-col">
-                  {[
-                    { query: "How to crack UST Global machine learning rounds?", count: 42 },
-                    { query: "Best free NLP/Transformers resources for 2026", count: 28 },
-                    { query: "Kerala Startup Mission grants application", count: 24 },
-                    { query: "What MLOps skills does IBS Trivandrum request?", count: 19 },
-                  ].map((item, idx, arr) => (
-                    <div key={item.query} className={`py-3.5 flex justify-between items-center text-xs ${idx !== arr.length - 1 ? "border-b border-white/5" : ""}`}>
-                      <div>
-                        <span className="text-gray-500 font-bold block">Query Rank #{idx + 1}</span>
-                        <span className="text-white italic mt-1 block">"{item.query}"</span>
+                <Card title="RAG bot top search reports" className="glass-panel bg-white/5 border-white/10 rounded-3xl">
+                  <div className="flex flex-col">
+                    {[
+                      { query: "How to crack UST Global machine learning rounds?", count: 42 },
+                      { query: "Best free NLP/Transformers resources for 2026", count: 28 },
+                      { query: "Kerala Startup Mission grants application", count: 24 },
+                      { query: "What MLOps skills does IBS Trivandrum request?", count: 19 },
+                    ].map((item, idx, arr) => (
+                      <div key={item.query} className={`py-3.5 flex justify-between items-center text-xs ${idx !== arr.length - 1 ? "border-b border-white/5" : ""}`}>
+                        <div>
+                          <span className="text-gray-500 font-bold block">Query Rank #{idx + 1}</span>
+                          <span className="text-white italic mt-1 block">"{item.query}"</span>
+                        </div>
+                        <Badge count={item.count} overflowCount={999} showZero color="#6366f1" />
                       </div>
-                      <Badge count={item.count} overflowCount={999} showZero color="#6366f1" />
+                    ))}
+                  </div>
+                </Card>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <Card title="Background Job Controllers" className="glass-panel bg-white/5 border-white/10 rounded-3xl">
+                  <div className="space-y-4">
+                    <p className="text-xs text-gray-400">
+                      Trigger background scrapers and predictive models training pipelines.
+                    </p>
+                    <div className="flex gap-4">
+                      <Button
+                        type="primary"
+                        onClick={handleRetrainModel}
+                        loading={trainingModel}
+                        icon={<Play size={14} />}
+                        className="bg-purple-650 hover:bg-purple-500 border-none rounded-xl text-xs font-bold"
+                      >
+                        Retrain Forecasting Model
+                      </Button>
+                      <Button
+                        onClick={handleRefreshTrends}
+                        loading={refreshingTrends}
+                        icon={<RefreshCw size={14} />}
+                        className="bg-white/5 border-white/10 text-white rounded-xl text-xs"
+                      >
+                        Refresh Tech Market Scrapers
+                      </Button>
                     </div>
-                  ))}
-                </div>
-              </Card>
+                  </div>
+                </Card>
+              </div>
             </div>
           )}
 
@@ -633,6 +795,165 @@ export default function EmployeeDashboard() {
           )}
 
           {/* Tab 5: Upskilling Mentor Chat (Retained) */}
+          {/* Tab: Knowledge Base Manager */}
+          {activeTab === "knowledge" && (
+            <div className="space-y-8 animate-fade-in">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white/[0.02] border border-white/5 p-6 rounded-[24px]">
+                <div>
+                  <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                    <BookOpen className="text-purple-400 w-6 h-6 animate-pulse" /> RAG Knowledge Base Manager
+                  </h3>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Upload documents or insert reference manuals into the FAISS semantic vector store for AI Mentor retrieval.
+                  </p>
+                </div>
+                <div className="bg-purple-900/20 border border-purple-500/30 px-4 py-2 rounded-xl text-center shrink-0">
+                  <span className="text-[10px] text-purple-300 block uppercase font-bold">Total Chunks Indexed</span>
+                  <strong className="text-lg text-white font-mono mt-0.5 block">
+                    {knowledgeStats ? knowledgeStats.total_chunks : "..."}
+                  </strong>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Left Column: Data ingestion forms */}
+                <div className="space-y-6">
+                  {/* Copy-paste text */}
+                  <Card title={<span className="text-xs font-bold text-gray-200">Copy-Paste Technical Text Reference</span>} className="glass-panel bg-white/5 border-white/10 rounded-2xl">
+                    <div className="space-y-4">
+                      <div>
+                        <span className="text-[10px] text-gray-400 block mb-1">Document Label / Description</span>
+                        <Input
+                          value={kbLabel}
+                          onChange={(e) => setKbLabel(e.target.value)}
+                          placeholder="e.g., UST Global ML Rounds Guide"
+                          className="bg-white/5 border-white/10 text-white rounded-lg"
+                        />
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-gray-400 block mb-1">Text Contents (min 50 chars)</span>
+                        <Input.TextArea
+                          value={kbText}
+                          onChange={(e) => setKbText(e.target.value)}
+                          rows={6}
+                          placeholder="Paste reference text here. It will be split into chunks and added to the vector index..."
+                          className="bg-white/5 border-white/10 text-white rounded-lg font-sans text-xs"
+                        />
+                      </div>
+                      <Button
+                        type="primary"
+                        onClick={handleAddText}
+                        loading={addingText}
+                        disabled={kbText.trim().length < 50}
+                        className="bg-purple-650 hover:bg-purple-500 border-none rounded-lg text-xs font-bold w-full"
+                      >
+                        Ingest Plain Text
+                      </Button>
+                    </div>
+                  </Card>
+
+                  {/* PDF Upload */}
+                  <Card title={<span className="text-xs font-bold text-gray-200">Upload PDF Manual (.pdf, max 5MB)</span>} className="glass-panel bg-white/5 border-white/10 rounded-2xl">
+                    <div className="space-y-4">
+                      <Upload
+                        beforeUpload={(file) => {
+                          setPdfFile(file);
+                          return false;
+                        }}
+                        maxCount={1}
+                        onRemove={() => setPdfFile(null)}
+                        accept=".pdf"
+                      >
+                        <Button className="bg-white/5 border-white/10 text-gray-300 rounded-lg text-xs">
+                          Select PDF Document
+                        </Button>
+                      </Upload>
+                      <Button
+                        type="primary"
+                        onClick={handleUploadPdf}
+                        loading={uploadingPdf}
+                        disabled={!pdfFile}
+                        className="bg-purple-650 hover:bg-purple-500 border-none rounded-lg text-xs font-bold w-full mt-2"
+                      >
+                        Ingest PDF Chunks
+                      </Button>
+                    </div>
+                  </Card>
+
+                  {/* Text File Upload */}
+                  <Card title={<span className="text-xs font-bold text-gray-200">Upload Text Document (.txt)</span>} className="glass-panel bg-white/5 border-white/10 rounded-2xl">
+                    <div className="space-y-4">
+                      <Upload
+                        beforeUpload={(file) => {
+                          setTxtFile(file);
+                          return false;
+                        }}
+                        maxCount={1}
+                        onRemove={() => setTxtFile(null)}
+                        accept=".txt"
+                      >
+                        <Button className="bg-white/5 border-white/10 text-gray-300 rounded-lg text-xs">
+                          Select TXT Document
+                        </Button>
+                      </Upload>
+                      <Button
+                        type="primary"
+                        onClick={handleUploadTxt}
+                        loading={uploadingTxt}
+                        disabled={!txtFile}
+                        className="bg-purple-650 hover:bg-purple-500 border-none rounded-lg text-xs font-bold w-full mt-2"
+                      >
+                        Ingest TXT Chunks
+                      </Button>
+                    </div>
+                  </Card>
+                </div>
+
+                {/* Right Column: Search sandbox */}
+                <div className="space-y-6">
+                  <Card title={<span className="text-xs font-bold text-gray-200">FAISS Index Search Sandbox</span>} className="glass-panel bg-white/5 border-white/10 rounded-3xl">
+                    <div className="space-y-4">
+                      <div className="flex gap-2">
+                        <Input
+                          value={searchQueryKb}
+                          onChange={(e) => setSearchQueryKb(e.target.value)}
+                          placeholder="Type query to test index retrieval..."
+                          className="bg-white/5 border-white/10 text-white rounded-lg"
+                        />
+                        <Button
+                          type="primary"
+                          onClick={handleSearchKb}
+                          loading={searchingKb}
+                          disabled={!searchQueryKb.trim()}
+                          className="bg-indigo-650 hover:bg-indigo-500 border-none rounded-lg"
+                        >
+                          Search
+                        </Button>
+                      </div>
+
+                      {searchResultsKb.length > 0 && (
+                        <div className="space-y-3.5 mt-4 max-h-[500px] overflow-y-auto pr-2">
+                          <span className="text-[10px] text-gray-500 uppercase font-black block">Retrieved Documents Chunks</span>
+                          {searchResultsKb.map((res: any, idx: number) => (
+                            <div key={idx} className="bg-white/[0.02] border border-white/5 p-3 rounded-xl space-y-1.5">
+                              <div className="flex justify-between items-center text-[9px]">
+                                <span className="text-indigo-400 font-bold font-mono">CHUNK #{idx + 1}</span>
+                                <span className="text-gray-500">Distance Score: {res.score ? res.score.toFixed(4) : "N/A"}</span>
+                              </div>
+                              <p className="text-[10px] text-gray-300 leading-normal font-mono italic">
+                                "{res.text || res[0]}"
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </Card>
+                </div>
+              </div>
+            </div>
+          )}
+
           {activeTab === "chat" && (
             <Card title="Salary & transition negotiation Sandbox" className="glass-panel bg-white/5 border-white/10 rounded-3xl h-[70vh] flex flex-col animate-fade-in">
               <div className="flex flex-col h-[52vh] justify-between">

@@ -27,8 +27,7 @@ llm = ChatGroq(
     temperature=0.3,
 )
 
-
-embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
+embedding_model = SentenceTransformer("BAAI/bge-small-en-v1.5")
 
 print("model loaded....")
 
@@ -141,52 +140,57 @@ def calculate_role_match(resume_skills: list, role: str) -> dict:
     required_skills = ROLE_SKILLS.get(role, [])
 
     if not required_skills or not resume_skills:
-        return {"match_percent": 0, "matched_skills": [], "missing_skills": required_skills}
+        return {
+            "match_percent": 0,
+            "matched_skills": [],
+            "missing_skills": required_skills
+        }
 
-    resume_text = " ".join(resume_skills)
-    required_text = " ".join(required_skills)
-
-    resume_embedding = embedding_model.encode([resume_text])
-    required_embedding = embedding_model.encode([required_text])
-
-    similarity = cosine_similarity(resume_embedding, required_embedding)[0][0]
-
-    resume_skills_lower = [s.lower() for s in resume_skills]
-
-    matched = []
-    missing = []
-
-    for skill in required_skills:
-
-        if skill.lower() in resume_skills_lower:
-            matched.append(skill)
-            continue
-
-        aliases = SKILL_ALIASES.get(skill.lower(), [])
-
-        alias_found = any(
-            alias.lower() in resume_skills_lower
-            for alias in aliases
+    try:
+        resume_embeddings = embedding_model.encode(
+            resume_skills,
+            convert_to_numpy=True,
+            normalize_embeddings=True
+        )
+        role_embeddings = embedding_model.encode(
+            required_skills,
+            convert_to_numpy=True,
+            normalize_embeddings=True
         )
 
-        if alias_found:
-            matched.append(skill)
-        else:
-            missing.append(skill)
+        similarity_matrix = cosine_similarity(role_embeddings, resume_embeddings)
 
-    skill_score = (len(matched) / len(required_skills)) * 100
+        matched_skills = []
+        missing_skills = []
+        semantic_scores = []
 
-    match_percent = round(
-        (float(similarity) * 70) +
-        (skill_score * 0.30),
-        1
-    )
+        for role_idx, similarities in enumerate(similarity_matrix):
+            best_idx = np.argmax(similarities)
+            best_similarity = float(similarities[best_idx])
+            semantic_scores.append(best_similarity)
 
-    return {
-        "match_percent": match_percent,
-        "matched_skills": matched,
-        "missing_skills": missing[:5],
-    }
+            if best_similarity >= 0.65:
+                matched_skills.append(required_skills[role_idx])
+            else:
+                missing_skills.append(required_skills[role_idx])
+
+        semantic_score = np.mean(semantic_scores) * 100
+        coverage_score = (len(matched_skills) / len(required_skills)) * 100
+        match_percent = round((semantic_score * 0.5) + (coverage_score * 0.5), 1)
+
+        return {
+            "match_percent": match_percent,
+            "matched_skills": matched_skills,
+            "missing_skills": missing_skills[:5]
+        }
+
+    except Exception as e:
+        print(f"Role matching error: {e}")
+        return {
+            "match_percent": 0,
+            "matched_skills": [],
+            "missing_skills": required_skills[:5]
+        }
 
 
 feedback_prompt = PromptTemplate(
@@ -207,7 +211,6 @@ Give practical advice in 4 bullet points:
 Be encouraging and specific to Indian job market."""
 )
 
-
 feedback_chain = feedback_prompt | llm | StrOutputParser()
 
 
@@ -220,7 +223,6 @@ def save_resume_analysis(
     ai_feedback
 ):
     session = get_connection()
-
     try:
         session.execute(
             text("""
@@ -250,7 +252,6 @@ def save_resume_analysis(
                 "ai_feedback": ai_feedback
             }
         )
-
         session.commit()
         print("INSERT SUCCESS")
 
@@ -268,6 +269,17 @@ async def scan_resume(
     file: UploadFile = File(...),
     target_role: str = Form("Machine Learning Engineer")
 ):
+    # ✅ FIX: file type check moved here — before reading/processing the file
+    allowed_types = {
+        "application/pdf",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    }
+    if file.content_type not in allowed_types:
+        raise HTTPException(
+            status_code=400,
+            detail="Only PDF and DOCX files are supported."
+        )
+
     file_bytes = await file.read()
 
     if len(file_bytes) > 5 * 1024 * 1024:
@@ -289,10 +301,7 @@ async def scan_resume(
     if target_role not in ROLE_SKILLS:
         target_role = "Machine Learning Engineer"
 
-    match_result = calculate_role_match(
-        extracted_skills,
-        target_role
-    )
+    match_result = calculate_role_match(extracted_skills, target_role)
 
     try:
         feedback = await feedback_chain.ainvoke(
@@ -303,7 +312,6 @@ async def scan_resume(
                 "match_percent": match_result["match_percent"]
             }
         )
-
     except Exception as e:
         print("Feedback Error:", e)
         feedback = "AI feedback temporarily unavailable."
