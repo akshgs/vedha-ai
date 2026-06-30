@@ -1,0 +1,234 @@
+@import "tailwindcss";
+
+:root {
+  --background: #030712;
+  --foreground: #f9fafb;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Scrollbar styles */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Glassmorphism panel style */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Glow effects */
+.glow-indigo {
+  box-shadow: 0 0 40px -10px rgba(99, 102, 241, 0.35);
+}
+.glow-emerald {
+  box-shadow: 0 0 40px -10px rgba(16, 185, 129, 0.35);
+}
+.glow-purple {
+  box-shadow: 0 0 40px -10px rgba(168, 85, 247, 0.35);
+}
+
+/* Micro-animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* AntD Select Options contrast rules */
+.ant-select-dropdown {
+  background-color: #111827 !important; /* Tailwind gray-900 equivalent */
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.ant-select-dropdown .ant-select-item {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+.ant-select-dropdown .ant-select-item-option-selected {
+  background-color: rgba(99, 102, 241, 0.25) !important;
+  color: #ffffff !important;
+}
+
+.ant-select-dropdown .ant-select-item-option-active {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
+}
+
+/* AntD Inputs theme color corrections */
+.ant-input-affix-wrapper, .ant-input, .ant-select-selector {
+  background-color: rgba(255, 255, 255, 0.08) !important; /* increased opacity */
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  color: #ffffff !important;
+}
+
+.ant-input-affix-wrapper:hover, .ant-input:hover, .ant-select-selector:hover {
+  border-color: #6366f1 !important;
+}
+
+.ant-input-affix-wrapper-focused, .ant-input:focus, .ant-select-focused .ant-select-selector {
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2) !important;
+}
+
+/* AntD Select specific label & icon overrides */
+.ant-select-selection-placeholder {
+  color: rgba(255, 255, 255, 0.5) !important; /* highly visible placeholder */
+}
+
+.ant-select-selection-item {
+  color: #ffffff !important;
+}
+
+.ant-select-arrow {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+/* AntD Table styling and contrast corrections */
+.ant-table {
+  background: transparent !important;
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+.ant-table-thead > tr > th {
+  background: rgba(255, 255, 255, 0.04) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  font-weight: 600 !important;
+}
+
+.ant-table-tbody > tr > td {
+  color: rgba(255, 255, 255, 0.8) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+.ant-table-tbody > tr:hover > td {
+  background: rgba(255, 255, 255, 0.03) !important;
+}
+
+.ant-table-placeholder {
+  background: transparent !important;
+}
+
+.ant-table-placeholder .ant-empty-description {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+/* Pagination styles */
+.ant-pagination-item {
+  background: rgba(255, 255, 255, 0.02) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.ant-pagination-item a {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.ant-pagination-item:hover {
+  border-color: #6366f1 !important;
+}
+
+.ant-pagination-item:hover a {
+  color: #6366f1 !important;
+}
+
+.ant-pagination-item-active {
+  background: rgba(99, 102, 241, 0.25) !important;
+  border-color: #6366f1 !important;
+}
+
+.ant-pagination-item-active a {
+  color: #ffffff !important;
+}
+
+.ant-pagination-prev .ant-pagination-item-link,
+.ant-pagination-next .ant-pagination-item-link {
+  background: rgba(255, 255, 255, 0.02) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.ant-pagination-prev:hover .ant-pagination-item-link,
+.ant-pagination-next:hover .ant-pagination-item-link {
+  border-color: #6366f1 !important;
+  color: #6366f1 !important;
+}
+
+/* Badge Status text */
+.ant-badge-status-text {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Checkbox and inputs styling */
+.ant-checkbox-inner {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+.ant-checkbox-checked .ant-checkbox-inner {
+  background-color: #6366f1 !important;
+  border-color: #6366f1 !important;
+}
+
+.ant-input::placeholder {
+  color: rgba(255, 255, 255, 0.4) !important;
+}
+
+/* Modal text corrections */
+.ant-modal-content {
+  background-color: #0f172a !important; /* Slate 900 */
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.ant-modal-header {
+  background: transparent !important;
+}
+
+.ant-modal-title {
+  color: #ffffff !important;
+}
+
+.ant-modal-close {
+  color: rgba(255, 255, 255, 0.55) !important;
+}
+
+.ant-modal-close:hover {
+  color: #ffffff !important;
+}
+
+.ant-form-item-label > label {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+.ant-table-column-sorter {
+  color: rgba(255, 255, 255, 0.4) !important;
+}
+

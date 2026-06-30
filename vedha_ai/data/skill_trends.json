@@ -1,0 +1,254 @@
+[
+  {
+    "skill": "Python",
+    "pypi_downloads": 0,
+    "github_stars": 587974,
+    "demand_score": 50.0,
+    "timestamp": "2026-05-12T14:43:26.539572",
+    "month": 5,
+    "week": 20
+  },
+  {
+    "skill": "PyTorch",
+    "pypi_downloads": 0,
+    "github_stars": 251116,
+    "demand_score": 50.0,
+    "timestamp": "2026-05-12T14:43:28.136980",
+    "month": 5,
+    "week": 20
+  },
+  {
+    "skill": "TensorFlow",
+    "pypi_downloads": 0,
+    "github_stars": 77437,
+    "demand_score": 38.72,
+    "timestamp": "2026-05-12T14:43:29.717109",
+    "month": 5,
+    "week": 20
+  },
+  {
+    "skill": "Transformers",
+    "pypi_downloads": 0,
+    "github_stars": 6267,
+    "demand_score": 3.13,
+    "timestamp": "2026-05-12T14:43:31.379903",
+    "month": 5,
+    "week": 20
+  },
+  {
+    "skill": "LangChain",
+    "pypi_downloads": 0,
+    "github_stars": 255566,
+    "demand_score": 50.0,
+    "timestamp": "2026-05-12T14:43:32.943468",
+    "month": 5,
+    "week": 20
+  },
+  {
+    "skill": "FastAPI",
+    "pypi_downloads": 0,
+    "github_stars": 108851,
+    "demand_score": 50.0,
+    "timestamp": "2026-05-12T14:43:34.551132",
+    "month": 5,
+    "week": 20
+  },
+  {
+    "skill": "Pandas",
+    "pypi_downloads": 677263980,
+    "github_stars": 225584,
+    "demand_score": 100,
+    "timestamp": "2026-05-12T14:43:36.129209",
+    "month": 5,
+    "week": 20
+  },
+  {
+    "skill": "Scikit-learn",
+    "pypi_downloads": 0,
+    "github_stars": 293013,
+    "demand_score": 50.0,
+    "timestamp": "2026-05-12T14:43:37.657766",
+    "month": 5,
+    "week": 20
+  },
+  {
+    "skill": "OpenCV",
+    "pypi_downloads": 47779195,
+    "github_stars": 101221,
+    "demand_score": 100,
+    "timestamp": "2026-05-12T14:43:39.236388",
+    "month": 5,
+    "week": 20
+  },
+  {
+    "skill": "Numpy",
+    "pypi_downloads": 0,
+    "github_stars": 278711,
+    "demand_score": 50.0,
+    "timestamp": "2026-05-12T14:43:40.776106",
+    "month": 5,
+    "week": 20
+  },
+  {
+    "skill": "Spacy",
+    "pypi_downloads": 21747830,
+    "github_stars": 0,
+    "demand_score": 50.0,
+    "timestamp": "2026-05-12T14:43:42.451545",
+    "month": 5,
+    "week": 20
+  },
+  {
+    "skill": "MLflow",
+    "pypi_downloads": 0,
+    "github_stars": 0,
+    "demand_score": 0.0,
+    "timestamp": "2026-05-12T14:43:44.141762",
+    "month": 5,
+    "week": 20
+  },
+  {
+    "skill": "Docker",
+    "pypi_downloads": 0,
+    "github_stars": 0,
+    "demand_score": 0.0,
+    "timestamp": "2026-05-12T14:43:45.839022",
+    "month": 5,
+    "week": 20
+  },
+  {
+    "skill": "Kubernetes",
+    "pypi_downloads": 0,
+    "github_stars": 0,
+    "demand_score": 0.0,
+    "timestamp": "2026-05-12T14:43:47.634132",
+    "month": 5,
+    "week": 20
+  },
+  {
+    "skill": "Python",
+    "pypi_downloads": 0,
+    "github_stars": 587974,
+    "demand_score": 50.0,
+    "timestamp": "2026-05-12T14:49:08.673100",
+    "month": 5,
+    "week": 20
+  },
+  {
+    "skill": "PyTorch",
+    "pypi_downloads": 0,
+    "github_stars": 251117,
+    "demand_score": 50.0,
+    "timestamp": "2026-05-12T14:49:10.256872",
+    "month": 5,
+    "week": 20
+  },
+  {
+    "skill": "TensorFlow",
+    "pypi_downloads": 0,
+    "github_stars": 77438,
+    "demand_score": 38.72,
+    "timestamp": "2026-05-12T14:49:11.909485",
+    "month": 5,
+    "week": 20
+  },
+  {
+    "skill": "Transformers",
+    "pypi_downloads": 143116689,
+    "github_stars": 6267,
+    "demand_score": 53.13,
+    "timestamp": "2026-05-12T14:49:13.492422",
+    "month": 5,
+    "week": 20
+  },
+  {
+    "skill": "LangChain",
+    "pypi_downloads": 0,
+    "github_stars": 255567,
+    "demand_score": 50.0,
+    "timestamp": "2026-05-12T14:49:15.099803",
+    "month": 5,
+    "week": 20
+  },
+  {
+    "skill": "FastAPI",
+    "pypi_downloads": 454409196,
+    "github_stars": 108852,
+    "demand_score": 100,
+    "timestamp": "2026-05-12T14:49:16.785311",
+    "month": 5,
+    "week": 20
+  },
+  {
+    "skill": "Pandas",
+    "pypi_downloads": 0,
+    "github_stars": 225585,
+    "demand_score": 50.0,
+    "timestamp": "2026-05-12T14:49:18.484399",
+    "month": 5,
+    "week": 20
+  },
+  {
+    "skill": "Scikit-learn",
+    "pypi_downloads": 0,
+    "github_stars": 293014,
+    "demand_score": 50.0,
+    "timestamp": "2026-05-12T14:49:20.083468",
+    "month": 5,
+    "week": 20
+  },
+  {
+    "skill": "OpenCV",
+    "pypi_downloads": 47779195,
+    "github_stars": 101221,
+    "demand_score": 100,
+    "timestamp": "2026-05-12T14:49:21.623537",
+    "month": 5,
+    "week": 20
+  },
+  {
+    "skill": "Numpy",
+    "pypi_downloads": 0,
+    "github_stars": 278714,
+    "demand_score": 50.0,
+    "timestamp": "2026-05-12T14:49:23.174552",
+    "month": 5,
+    "week": 20
+  },
+  {
+    "skill": "Spacy",
+    "pypi_downloads": 0,
+    "github_stars": 0,
+    "demand_score": 0.0,
+    "timestamp": "2026-05-12T14:49:24.733264",
+    "month": 5,
+    "week": 20
+  },
+  {
+    "skill": "MLflow",
+    "pypi_downloads": 0,
+    "github_stars": 0,
+    "demand_score": 0.0,
+    "timestamp": "2026-05-12T14:49:26.323747",
+    "month": 5,
+    "week": 20
+  },
+  {
+    "skill": "Docker",
+    "pypi_downloads": 0,
+    "github_stars": 0,
+    "demand_score": 0.0,
+    "timestamp": "2026-05-12T14:49:28.093246",
+    "month": 5,
+    "week": 20
+  },
+  {
+    "skill": "Kubernetes",
+    "pypi_downloads": 0,
+    "github_stars": 0,
+    "demand_score": 0.0,
+    "timestamp": "2026-05-12T14:49:29.631326",
+    "month": 5,
+    "week": 20
+  }
+]
