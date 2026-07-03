@@ -6,6 +6,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.auth import router as auth_router
 from app.core.config import settings
 from app.database.init_db import init_db
+from app.api.v1.resume import router as resume_router
+from app.api.v1.jobs import router as jobs_router
+from app.api.v1.scraper import router as scraper_router
+
+
+
+
+
+
+
+
 
 
 @asynccontextmanager
@@ -36,6 +47,23 @@ app.include_router(
     tags=["Authentication"],
 )
 
+app.include_router(
+    resume_router,
+    prefix="/api/v1/resume",
+    tags=["Resume"],
+)
+
+app.include_router(
+    jobs_router,
+    prefix="/api/v1/jobs",
+    tags=["Jobs"],
+)
+
+app.include_router(
+    scraper_router,
+    prefix="/api/v1/scraper",
+    tags=["Scraper"],
+)
 
 @app.get("/")
 def root():

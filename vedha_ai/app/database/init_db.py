@@ -3,9 +3,8 @@ from app.database.database import engine
 
 # Import models so SQLAlchemy registers them
 from app.models.user import User
-
+from app.models.resume import ResumeAnalysis
+from app.models.job import Job
 
 def init_db() -> None:
     Base.metadata.create_all(bind=engine)
-    
-    
