@@ -1,0 +1,23 @@
+{
+  "Machine Learning Engineer": {
+    "technical": [
+      "What is overfitting and how do you prevent it?",
+      "Explain the bias-variance tradeoff.",
+      "What is the difference between bagging and boosting?",
+      "How does Random Forest work?",
+      "Explain Gradient Descent.",
+      "What is Cross Validation?",
+      "Difference between Precision and Recall.",
+      "What is ROC-AUC?",
+      "Explain CNN and where it is used.",
+      "What is MLOps?"
+    ],
+    "hr": [
+      "Tell me about yourself.",
+      "Why do you want to become an ML Engineer?",
+      "Describe a challenging project.",
+      "How do you handle deadlines?",
+      "Why should we hire you?"
+    ]
+  }
+}

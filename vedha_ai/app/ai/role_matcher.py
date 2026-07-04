@@ -1,3 +1,22 @@
+import json
+from pathlib import Path
+
+from app.utils.skill_categories import get_skill_category
+
+
+ROLE_FILE = (
+    Path(__file__).parent.parent
+    / "data"
+    / "role_weights.json"
+)
+
+with open(
+    ROLE_FILE,
+    encoding="utf-8",
+) as f:
+    ROLE_WEIGHTS = json.load(f)
+
+
 ROLE_KEYWORDS = {
     "Machine Learning Engineer": [
         "machine learning",
@@ -33,7 +52,6 @@ ROLE_KEYWORDS = {
     ],
 }
 
-
 def role_match_score(
     target_role: str,
     job_title: str,
@@ -41,65 +59,60 @@ def role_match_score(
     description: str,
 ) -> float:
 
-    keywords = [
+    role_config = ROLE_WEIGHTS.get(
+        target_role,
+        {},
+    )
+
+    if not role_config:
+        return 0.0
+
+    weights = role_config.get(
+        "weights",
+        {},
+    )
+
+    title_keywords = [
         keyword.lower()
-        for keyword in ROLE_KEYWORDS.get(
-            target_role,
+        for keyword in role_config.get(
+            "title_keywords",
             [],
         )
     ]
 
-    if not keywords:
-        return 0.0
-
     title = job_title.lower()
-    description = description.lower()
 
-    skills = {
-        skill.lower().strip()
-        for skill in job_skills
-    }
+    score = 0
+    seen_categories = set()
 
-    # ---------- Title Score (50%) ----------
-    title_matches = sum(
-        1
-        for keyword in keywords
-        if keyword in title
-    )
+    # ---------- Category Score ----------
+    for skill in job_skills:
 
-    title_score = (
-        title_matches / len(keywords)
-    ) * 50
+        category = get_skill_category(skill)
 
-    # ---------- Skills Score (30%) ----------
-    skill_matches = sum(
-        1
-        for keyword in keywords
-        if keyword in skills
-    )
+        if (
+            category
+            and category in weights
+            and category not in seen_categories
+        ):
+            score += weights[category]
+            seen_categories.add(category)
 
-    skills_score = (
-        skill_matches / len(keywords)
-    ) * 30
+    # ---------- Title Bonus ----------
+    title_bonus = 0
 
-    # ---------- Description Score (20%) ----------
-    description_matches = sum(
-        1
-        for keyword in keywords
-        if keyword in description
-    )
+    for keyword in title_keywords:
 
-    description_score = (
-        description_matches / len(keywords)
-    ) * 20
+        if keyword in title:
+            title_bonus = 20
+            break
 
-    final_score = (
-        title_score
-        + skills_score
-        + description_score
+    final_score = min(
+        score + title_bonus,
+        100,
     )
 
     return round(
-        min(final_score, 100),
+        final_score,
         1,
     )

@@ -1,33 +1,71 @@
 {
     "Machine Learning Engineer": {
-        "machine_learning": 50,
-        "data": 20,
-        "frameworks": 15,
-        "programming": 10,
-        "cloud": 5
+        "title_keywords": [
+            "machine learning engineer",
+            "ml engineer",
+            "ai engineer",
+            "artificial intelligence",
+            "deep learning",
+            "computer vision",
+            "nlp"
+        ],
+        "weights": {
+            "machine_learning": 50,
+            "data": 20,
+            "frameworks": 15,
+            "programming": 10,
+            "cloud": 5
+        }
     },
 
     "Data Scientist": {
-        "data": 40,
-        "machine_learning": 30,
-        "programming": 15,
-        "frameworks": 10,
-        "cloud": 5
+        "title_keywords": [
+            "data scientist",
+            "data science",
+            "analytics",
+            "machine learning"
+        ],
+        "weights": {
+            "data": 40,
+            "machine_learning": 30,
+            "programming": 15,
+            "frameworks": 10,
+            "cloud": 5
+        }
     },
 
     "Full Stack Developer": {
-        "programming": 35,
-        "frameworks": 35,
-        "cloud": 15,
-        "data": 10,
-        "machine_learning": 5
+        "title_keywords": [
+            "full stack",
+            "software engineer",
+            "backend",
+            "frontend",
+            "web developer"
+        ],
+        "weights": {
+            "programming": 35,
+            "frameworks": 35,
+            "cloud": 15,
+            "data": 10,
+            "machine_learning": 5
+        }
     },
 
     "NLP Engineer": {
-        "nlp": 40,
-        "machine_learning": 25,
-        "frameworks": 15,
-        "programming": 15,
-        "cloud": 5
+        "title_keywords": [
+            "nlp",
+            "language model",
+            "llm",
+            "bert",
+            "transformers",
+            "rag"
+        ],
+        "weights": {
+            "nlp": 40,
+            "machine_learning": 25,
+            "frameworks": 15,
+            "programming": 15,
+            "cloud": 5
+        }
     }
 }

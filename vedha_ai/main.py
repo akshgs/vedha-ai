@@ -9,8 +9,8 @@ from app.database.init_db import init_db
 from app.api.v1.resume import router as resume_router
 from app.api.v1.jobs import router as jobs_router
 from app.api.v1.scraper import router as scraper_router
-
-
+from app.api.v1.roadmap import router as roadmap_router
+from app.api.v1.dashboard import router as dashboard_router
 
 
 
@@ -63,6 +63,15 @@ app.include_router(
     scraper_router,
     prefix="/api/v1/scraper",
     tags=["Scraper"],
+)
+
+app.include_router(
+    roadmap_router,
+    prefix="/api/v1",
+)
+app.include_router(
+    dashboard_router,
+    prefix="/api/v1",
 )
 
 @app.get("/")

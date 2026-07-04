@@ -1,0 +1,81 @@
+{
+  "Machine Learning Engineer": {
+    "required_skills": [
+      "python",
+      "numpy",
+      "pandas",
+      "scikit-learn",
+      "statistics",
+      "machine learning",
+      "feature engineering",
+      "data preprocessing",
+      "tensorflow",
+      "pytorch",
+      "deep learning",
+      "computer vision",
+      "nlp",
+      "sql",
+      "git",
+      "docker",
+      "linux",
+      "aws",
+      "mlops"
+    ]
+  },
+
+  "Data Scientist": {
+    "required_skills": [
+      "python",
+      "sql",
+      "statistics",
+      "numpy",
+      "pandas",
+      "data analysis",
+      "data visualization",
+      "machine learning",
+      "scikit-learn",
+      "power bi",
+      "tableau",
+      "git",
+      "excel"
+    ]
+  },
+
+  "Full Stack Developer": {
+    "required_skills": [
+      "html",
+      "css",
+      "javascript",
+      "typescript",
+      "react",
+      "nodejs",
+      "python",
+      "fastapi",
+      "django",
+      "sql",
+      "mongodb",
+      "git",
+      "docker",
+      "rest api"
+    ]
+  },
+
+  "NLP Engineer": {
+    "required_skills": [
+      "python",
+      "nlp",
+      "spacy",
+      "nltk",
+      "transformers",
+      "bert",
+      "hugging face",
+      "llm",
+      "rag",
+      "langchain",
+      "pytorch",
+      "deep learning",
+      "sql",
+      "git"
+    ]
+  }
+}
