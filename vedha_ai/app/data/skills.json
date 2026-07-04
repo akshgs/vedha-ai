@@ -1,0 +1,72 @@
+{
+    "machine_learning": [
+        "machine learning",
+        "deep learning",
+        "supervised learning",
+        "unsupervised learning",
+        "reinforcement learning",
+        "feature engineering",
+        "model training",
+        "model deployment",
+        "mlops"
+    ],
+
+    "programming": [
+        "python",
+        "java",
+        "c++",
+        "c",
+        "javascript",
+        "typescript",
+        "go",
+        "rust"
+    ],
+
+    "frameworks": [
+        "tensorflow",
+        "pytorch",
+        "keras",
+        "scikit-learn",
+        "xgboost",
+        "lightgbm",
+        "catboost",
+        "fastapi",
+        "flask",
+        "django"
+    ],
+
+    "nlp": [
+        "nlp",
+        "bert",
+        "transformers",
+        "huggingface",
+        "langchain",
+        "llm",
+        "rag",
+        "spacy",
+        "nltk"
+    ],
+
+    "data": [
+        "numpy",
+        "pandas",
+        "sql",
+        "postgresql",
+        "mysql",
+        "mongodb",
+        "power bi",
+        "tableau",
+        "statistics"
+    ],
+
+    "cloud": [
+        "aws",
+        "azure",
+        "gcp",
+        "docker",
+        "kubernetes",
+        "linux",
+        "git",
+        "jenkins"
+    ]
+}

@@ -65,6 +65,15 @@ class JobRepository:
             )
 
             if exists:
+
+                exists.location = job_data["location"]
+                exists.description = job_data["description"]
+                exists.skills = job_data["skills"]
+                exists.salary = job_data["salary"]
+                exists.job_type = job_data["job_type"]
+                exists.source = job_data["source"]
+                exists.url = job_data["url"]
+
                 continue
 
             job = Job(

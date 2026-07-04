@@ -1,49 +1,10 @@
 import spacy
 
+from app.utils.skill_loader import load_skills
+
 nlp = spacy.load("en_core_web_sm")
 
-
-KNOWN_SKILLS = {
-    "python",
-    "pytorch",
-    "tensorflow",
-    "scikit-learn",
-    "numpy",
-    "pandas",
-    "sql",
-    "postgresql",
-    "mysql",
-    "docker",
-    "kubernetes",
-    "aws",
-    "azure",
-    "gcp",
-    "fastapi",
-    "flask",
-    "django",
-    "machine learning",
-    "deep learning",
-    "neural networks",
-    "computer vision",
-    "nlp",
-    "transformers",
-    "bert",
-    "llm",
-    "rag",
-    "langchain",
-    "git",
-    "linux",
-    "mlops",
-    "airflow",
-    "spark",
-    "hadoop",
-    "power bi",
-    "tableau",
-    "statistics",
-    "data analysis",
-    "feature engineering",
-    "data preprocessing",
-}
+KNOWN_SKILLS = load_skills()
 
 
 def extract_job_skills(text: str) -> list[str]:
@@ -57,12 +18,14 @@ def extract_job_skills(text: str) -> list[str]:
 
     skills = set()
 
+    # Direct keyword matching
     for skill in KNOWN_SKILLS:
         if skill in text:
             skills.add(skill)
 
+    # Noun phrase matching
     for chunk in doc.noun_chunks:
-        chunk_text = chunk.text.strip()
+        chunk_text = chunk.text.strip().lower()
 
         if chunk_text in KNOWN_SKILLS:
             skills.add(chunk_text)

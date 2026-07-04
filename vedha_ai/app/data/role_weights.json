@@ -1,0 +1,33 @@
+{
+    "Machine Learning Engineer": {
+        "machine_learning": 50,
+        "data": 20,
+        "frameworks": 15,
+        "programming": 10,
+        "cloud": 5
+    },
+
+    "Data Scientist": {
+        "data": 40,
+        "machine_learning": 30,
+        "programming": 15,
+        "frameworks": 10,
+        "cloud": 5
+    },
+
+    "Full Stack Developer": {
+        "programming": 35,
+        "frameworks": 35,
+        "cloud": 15,
+        "data": 10,
+        "machine_learning": 5
+    },
+
+    "NLP Engineer": {
+        "nlp": 40,
+        "machine_learning": 25,
+        "frameworks": 15,
+        "programming": 15,
+        "cloud": 5
+    }
+}

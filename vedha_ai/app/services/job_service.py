@@ -1,13 +1,11 @@
 import json
-from unittest import result
 
 from app.ai.job_matcher import calculate_job_match
 from app.ai.semantic_matcher import semantic_similarity
 from app.repositories.job_repository import JobRepository
-
+from app.ai.role_matcher import role_match_score
 
 MIN_MATCH_PERCENT = 20
-
 
 class JobService:
 
@@ -19,20 +17,24 @@ class JobService:
         student_id: int,
     ):
 
-        resume_skills = self.repository.get_resume_skills(
+        resume = self.repository.get_latest_resume(
             student_id
         )
 
-        if not resume_skills:
+        if not resume:
             raise ValueError(
                 "Resume analysis not found."
             )
 
+        resume_skills = json.loads(
+            resume.matched_skills
+        )
+
+        target_role = resume.target_role
+
         jobs = self.repository.get_all_jobs()
 
         recommendations = []
-
-        
 
         for job in jobs:
 
@@ -51,24 +53,24 @@ class JobService:
                 resume_skills,
                 job_skills,
             )
-            
-            
+
             semantic_score = semantic_similarity(
-                            resume_skills,
-                            job_skills,
-                        )
-            final_score = round((result["match_percent"] * 0.6)
-                                + (semantic_score * 0.4),
-                                1,
-                        )
-            print("=" * 60)
-            print("Job:", job.title)
-            print("Resume Skills:", resume_skills)
-            print("Job Skills:", job_skills)
-            print("Exact Score:", result["match_percent"])
-            print("Semantic Score:", semantic_score)
-            print("Final Score:", final_score)
-            print("=" * 60)
+                resume_skills,
+                job_skills,
+            )
+
+            role_score = role_match_score(
+                target_role=target_role,
+                job_title=job.title,
+                description=job.description,
+            )
+
+            final_score = round(
+                (result["match_percent"] * 0.4)
+                + (semantic_score * 0.3)
+                + (role_score * 0.3),
+                1,
+            )
 
             if final_score >= MIN_MATCH_PERCENT:
 
@@ -83,6 +85,9 @@ class JobService:
                         "source": job.source,
                         "url": job.url,
                         "match_percent": final_score,
+                        "exact_match_score": result["match_percent"],
+                        "semantic_score": semantic_score,
+                        "role_score": role_score,
                         "matched_skills": result["matched_skills"],
                     }
                 )
@@ -94,5 +99,6 @@ class JobService:
 
         return {
             "student_id": student_id,
+            "target_role": target_role,
             "recommended_jobs": recommendations[:10],
         }
