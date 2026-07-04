@@ -60,10 +60,11 @@ class JobService:
             )
 
             role_score = role_match_score(
-                target_role=target_role,
-                job_title=job.title,
-                description=job.description,
-            )
+    target_role=target_role,
+    job_title=job.title,
+    job_skills=job_skills,
+    description=job.description,
+)
 
             final_score = round(
                 (result["match_percent"] * 0.4)
