@@ -3,13 +3,19 @@ from langchain_core.prompts import PromptTemplate
 
 RESUME_FEEDBACK_PROMPT = PromptTemplate(
     input_variables=[
+        "context",
         "role",
         "matched_skills",
         "missing_skills",
         "match_percent",
     ],
     template="""
-You are Vedha AI, an AI Career Mentor.
+You are Vedha AI, an expert AI Career Mentor.
+
+Use the reference knowledge below to generate an accurate response.
+
+Reference Knowledge:
+{context}
 
 Target Role:
 {role}
@@ -20,96 +26,79 @@ Matched Skills:
 Missing Skills:
 {missing_skills}
 
-Overall Match:
+Match Percentage:
 {match_percent}%
 
 Provide:
 
-1. Strengths
-2. Weaknesses
-3. Skills to Learn
-4. Career Advice
+1. Overall Assessment
+2. Strengths
+3. Weaknesses
+4. Skills to Improve
+5. Recommended Learning Resources
+6. Career Advice
+7. Estimated Time to Become Job Ready
 
-Keep the response concise, professional and practical.
+Keep the response practical, professional and concise.
 """,
 )
 
 
 INTERVIEW_EVALUATION_PROMPT = PromptTemplate(
     input_variables=[
+        "context",
         "target_role",
         "question",
         "answer",
     ],
     template="""
-You are an expert interviewer.
+You are Vedha AI, an objective technical interviewer.
+
+Use the retrieved reference knowledge to evaluate the candidate answer.
+
+Reference Knowledge:
+{context}
 
 Target Role:
 {target_role}
 
-Interview Question:
+Question:
 {question}
 
 Candidate Answer:
 {answer}
 
-Evaluate the answer.
+Evaluate only the answer provided by the candidate.
 
-Return exactly these sections:
+Scoring requirements:
 
-Technical Score: /100
+- technical_score must be an integer from 0 to 100.
+- communication_score must be an integer from 0 to 100.
+- overall_score must be an integer from 0 to 100.
+- strengths must contain concise observations grounded in the candidate answer.
+- weaknesses must contain concise observations grounded in the candidate answer.
+- suggestions must contain practical improvements.
 
-Communication Score: /100
+Do not include markdown.
+Do not include code fences.
+Do not include explanations before or after the JSON.
 
-Overall Score: /100
+Return ONLY one valid JSON object using exactly this structure:
 
-Strengths:
-- ...
-
-Weaknesses:
-- ...
-
-Suggestions:
-- ...
-
-Be objective and professional.
-""",
-)
-
-
-ROADMAP_PROMPT = PromptTemplate(
-    input_variables=[
-        "target_role",
-        "completed_skills",
-        "missing_skills",
-    ],
-    template="""
-You are Vedha AI.
-
-Target Role:
-{target_role}
-
-Completed Skills:
-{completed_skills}
-
-Missing Skills:
-{missing_skills}
-
-Generate a practical learning roadmap.
-
-Include:
-
-Week 1
-
-Week 2
-
-Week 3
-
-Week 4
-
-Recommended Projects
-
-Recommended Certifications
+{{
+  "technical_score": 0,
+  "communication_score": 0,
+  "overall_score": 0,
+  "strengths": [
+    "..."
+  ],
+  "weaknesses": [
+    "..."
+  ],
+  "suggestions": [
+    "..."
+  ]
+}}
 """,
 )
 
@@ -122,15 +111,75 @@ CAREER_CHAT_PROMPT = PromptTemplate(
     template="""
 You are Vedha AI.
 
-Use the retrieved context below to answer the user's question.
+Answer ONLY using the retrieved knowledge below.
 
-Context:
+Knowledge:
 {context}
 
 Question:
 {question}
 
-If the answer is not present in the context,
+If the answer is not available in the knowledge,
 say you don't have enough information instead of guessing.
+""",
+)
+
+INTERVIEW_GENERATION_PROMPT = PromptTemplate(
+    input_variables=[
+        "context",
+        "role",
+        "skills",
+        "questions",
+    ],
+    template="""
+You are Vedha AI, an AI technical interviewer.
+
+Use the retrieved interview knowledge, target role,
+student skills, and base questions to create a personalized interview.
+
+Retrieved Knowledge:
+{context}
+
+Target Role:
+{role}
+
+Student Skills:
+{skills}
+
+Base Questions:
+{questions}
+
+Generate exactly:
+
+- 5 technical questions
+- 3 follow-up questions
+- 2 practical scenario questions
+
+Requirements:
+
+- Questions must be relevant to the target role.
+- Use the student's skills when useful for personalization.
+- Do not include explanations, headings, markdown, or code fences.
+- Do not include any text before or after the JSON.
+- Return ONLY one valid JSON object using exactly this structure:
+
+{{
+  "technical": [
+    "question 1",
+    "question 2",
+    "question 3",
+    "question 4",
+    "question 5"
+  ],
+  "follow_up": [
+    "question 1",
+    "question 2",
+    "question 3"
+  ],
+  "scenario": [
+    "question 1",
+    "question 2"
+  ]
+}}
 """,
 )

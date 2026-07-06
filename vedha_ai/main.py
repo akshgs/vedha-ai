@@ -11,7 +11,7 @@ from app.api.v1.jobs import router as jobs_router
 from app.api.v1.scraper import router as scraper_router
 from app.api.v1.roadmap import router as roadmap_router
 from app.api.v1.dashboard import router as dashboard_router
-
+from app.api.v1.interview import router as interview_router
 
 
 
@@ -72,6 +72,12 @@ app.include_router(
 app.include_router(
     dashboard_router,
     prefix="/api/v1",
+)
+
+app.include_router(
+    interview_router,
+    prefix="/api/v1/interview",
+    tags=["Interview"],
 )
 
 @app.get("/")

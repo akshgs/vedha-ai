@@ -5,6 +5,8 @@ from app.database.database import engine
 from app.models.user import User
 from app.models.resume import ResumeAnalysis
 from app.models.job import Job
+from app.models.interview import InterviewSession, InterviewAnswer
+
 
 def init_db() -> None:
     Base.metadata.create_all(bind=engine)

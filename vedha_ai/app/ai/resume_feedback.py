@@ -1,50 +1,21 @@
-import os
-
-from dotenv import load_dotenv
 from langchain_core.output_parsers import StrOutputParser
-from langchain_core.prompts import PromptTemplate
-from langchain_groq import ChatGroq
 
-load_dotenv()
+from app.ai.engine import get_llm
+from app.ai.prompts import RESUME_FEEDBACK_PROMPT
+from app.ai.rag_engine import retrieve_context
 
-llm = ChatGroq(
+
+llm = get_llm(
     model="llama-3.1-8b-instant",
-    groq_api_key=os.getenv("GROQ_API_KEY"),
     temperature=0.3,
 )
 
-feedback_prompt = PromptTemplate(
-    input_variables=[
-        "role",
-        "matched_skills",
-        "missing_skills",
-        "match_percent",
-    ],
-    template="""
-You are a professional career counselor.
 
-Target Role: {role}
-
-Match Score: {match_percent}%
-
-Matched Skills:
-{matched_skills}
-
-Missing Skills:
-{missing_skills}
-
-Provide:
-
-1. Overall assessment
-2. Top skills to learn
-3. Free learning resources
-4. Estimated timeline to become job-ready
-
-Keep the response practical and concise.
-""",
+feedback_chain = (
+    RESUME_FEEDBACK_PROMPT
+    | llm
+    | StrOutputParser()
 )
-
-feedback_chain = feedback_prompt | llm | StrOutputParser()
 
 
 async def generate_feedback(
@@ -55,12 +26,26 @@ async def generate_feedback(
 ) -> str:
 
     try:
+
+        query = (
+            f"{role} "
+            f"{' '.join(missing_skills)} "
+            "career roadmap skills"
+        )
+
+        context = retrieve_context(query)
+
         return await feedback_chain.ainvoke(
             {
                 "role": role,
-                "matched_skills": ", ".join(matched_skills),
-                "missing_skills": ", ".join(missing_skills),
+                "matched_skills": ", ".join(
+                    matched_skills
+                ),
+                "missing_skills": ", ".join(
+                    missing_skills
+                ),
                 "match_percent": match_percent,
+                "context": context,
             }
         )
 
