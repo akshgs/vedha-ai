@@ -1,6 +1,7 @@
-from langchain_core.prompts import PromptTemplate
-
-
+from langchain_core.prompts import (
+    PromptTemplate,
+    ChatPromptTemplate,
+)
 RESUME_FEEDBACK_PROMPT = PromptTemplate(
     input_variables=[
         "context",
@@ -182,4 +183,42 @@ Requirements:
   ]
 }}
 """,
+)
+
+
+INTERVIEW_REPORT_PROMPT = ChatPromptTemplate.from_template(
+    """
+You are an expert Senior Technical Interviewer.
+
+Analyze the complete interview.
+
+Target Role:
+{target_role}
+
+Questions:
+{questions}
+
+Candidate Answers:
+{answers}
+
+Scores:
+{scores}
+
+Return ONLY valid JSON.
+
+Schema:
+
+{{
+  "overall_assessment": "...",
+  "technical_level": "...",
+  "communication_level": "...",
+  "strengths": ["..."],
+  "weaknesses": ["..."],
+  "recommended_topics": ["..."],
+  "recommended_projects": ["..."],
+  "job_readiness": "...",
+  "next_learning_plan": "...",
+  "hiring_recommendation": "..."
+}}
+"""
 )

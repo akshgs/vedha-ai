@@ -6,7 +6,7 @@ from app.models.user import User
 from app.models.resume import ResumeAnalysis
 from app.models.job import Job
 from app.models.interview import InterviewSession, InterviewAnswer
-
+from app.models.roadmap import Roadmap
 
 def init_db() -> None:
     Base.metadata.create_all(bind=engine)

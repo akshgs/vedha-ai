@@ -3,20 +3,16 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.v1.auth import router as auth_router
 from app.core.config import settings
 from app.database.init_db import init_db
+
+from app.api.v1.auth import router as auth_router
 from app.api.v1.resume import router as resume_router
 from app.api.v1.jobs import router as jobs_router
 from app.api.v1.scraper import router as scraper_router
 from app.api.v1.roadmap import router as roadmap_router
 from app.api.v1.dashboard import router as dashboard_router
 from app.api.v1.interview import router as interview_router
-
-
-
-
-
 
 
 @asynccontextmanager
@@ -33,6 +29,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_ORIGINS,
@@ -41,11 +38,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+# ---------------- Authentication ----------------
+
 app.include_router(
     auth_router,
     prefix="/api/v1/auth",
     tags=["Authentication"],
 )
+
+# ---------------- Resume ----------------
 
 app.include_router(
     resume_router,
@@ -53,11 +55,15 @@ app.include_router(
     tags=["Resume"],
 )
 
+# ---------------- Jobs ----------------
+
 app.include_router(
     jobs_router,
     prefix="/api/v1/jobs",
     tags=["Jobs"],
 )
+
+# ---------------- Job Scraper ----------------
 
 app.include_router(
     scraper_router,
@@ -65,20 +71,33 @@ app.include_router(
     tags=["Scraper"],
 )
 
+# ---------------- Roadmap ----------------
+
 app.include_router(
     roadmap_router,
     prefix="/api/v1",
 )
+
+# ---------------- Dashboard ----------------
+
 app.include_router(
     dashboard_router,
     prefix="/api/v1",
 )
 
+# ---------------- Interview ----------------
+
+# NOTE:
+# interview.py already has:
+# APIRouter(prefix="/interview")
+# so only "/api/v1" should be added here.
+
 app.include_router(
     interview_router,
-    prefix="/api/v1/interview",
-    tags=["Interview"],
+    prefix="/api/v1",
 )
+
+# ---------------- Root ----------------
 
 @app.get("/")
 def root():
