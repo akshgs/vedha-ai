@@ -2,17 +2,18 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
-from app.services.interview_service import InterviewService
 from app.schemas.interview import (
+    InterviewCompleteRequest,
+    InterviewCompleteResponse,
+    InterviewDetailsResponse,
     InterviewEvaluateRequest,
     InterviewGenerateRequest,
     InterviewGenerateResponse,
     InterviewHistoryResponse,
-    InterviewDetailsResponse,
-    InterviewCompleteRequest,
-    InterviewCompleteResponse,
     InterviewReportResponse,
 )
+from app.security.jwt import get_current_user
+from app.services.interview_service import InterviewService
 
 router = APIRouter(
     prefix="/interview",
@@ -26,12 +27,13 @@ router = APIRouter(
 )
 def generate_interview(
     request: InterviewGenerateRequest,
+    current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
 
     return InterviewService.generate_interview(
         db=db,
-        student_id=request.student_id,
+        student_id=current_user.id,
         target_role=request.target_role,
     )
 
@@ -39,6 +41,7 @@ def generate_interview(
 @router.post("/evaluate")
 def evaluate_interview(
     request: InterviewEvaluateRequest,
+    current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
 
@@ -52,17 +55,17 @@ def evaluate_interview(
 
 
 @router.get(
-    "/history/{student_id}",
+    "/history",
     response_model=InterviewHistoryResponse,
 )
 def interview_history(
-    student_id: int,
+    current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
 
     history = InterviewService.get_history(
         db=db,
-        student_id=student_id,
+        student_id=current_user.id,
     )
 
     return {
@@ -76,6 +79,7 @@ def interview_history(
 )
 def interview_details(
     interview_id: int,
+    current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
 
@@ -84,12 +88,14 @@ def interview_details(
         interview_id=interview_id,
     )
 
+
 @router.post(
     "/complete",
     response_model=InterviewCompleteResponse,
 )
 def complete_interview(
     request: InterviewCompleteRequest,
+    current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
 
@@ -98,12 +104,14 @@ def complete_interview(
         interview_id=request.interview_id,
     )
 
+
 @router.get(
     "/report/{interview_id}",
     response_model=InterviewReportResponse,
 )
 def interview_report(
     interview_id: int,
+    current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
 

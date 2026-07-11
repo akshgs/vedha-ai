@@ -1,14 +1,22 @@
+from functools import lru_cache
+
 from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
 from langchain_huggingface import HuggingFaceEmbeddings
 
-from app.knowledge.loader import load_knowledge_documents
 from app.knowledge.chunker import chunk_documents
+from app.knowledge.loader import load_knowledge_documents
 
 
-embedding_model = HuggingFaceEmbeddings(
-    model_name="BAAI/bge-small-en-v1.5"
-)
+@lru_cache(maxsize=1)
+def get_embedding_model():
+    """
+    Load the embedding model only once.
+    It will be created the first time it is needed.
+    """
+    return HuggingFaceEmbeddings(
+        model_name="BAAI/bge-small-en-v1.5",
+    )
 
 
 def build_vector_store():
@@ -21,7 +29,7 @@ def build_vector_store():
         Document(
             page_content=chunk["content"],
             metadata={
-                "source": chunk["source"]
+                "source": chunk["source"],
             },
         )
         for chunk in chunks
@@ -29,5 +37,5 @@ def build_vector_store():
 
     return FAISS.from_documents(
         docs,
-        embedding_model,
+        get_embedding_model(),
     )

@@ -2,14 +2,11 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
-
 from app.repositories.resume_repository import ResumeRepository
 from app.repositories.roadmap_repository import RoadmapRepository
-
-from app.services.roadmap_service import RoadmapService
-
 from app.schemas.roadmap import RoadmapResponse
-
+from app.security.jwt import get_current_user
+from app.services.roadmap_service import RoadmapService
 
 router = APIRouter(
     prefix="/roadmap",
@@ -18,11 +15,11 @@ router = APIRouter(
 
 
 @router.get(
-    "/{student_id}",
+    "",
     response_model=RoadmapResponse,
 )
 def generate_roadmap(
-    student_id: int,
+    current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
 
@@ -34,4 +31,6 @@ def generate_roadmap(
         resume_repository=resume_repository,
     )
 
-    return service.generate_roadmap(student_id)
+    return service.generate_roadmap(
+        current_user.id
+    )

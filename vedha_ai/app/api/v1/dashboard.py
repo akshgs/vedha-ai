@@ -5,8 +5,9 @@ from app.database.database import get_db
 from app.repositories.dashboard_repository import DashboardRepository
 from app.repositories.job_repository import JobRepository
 from app.repositories.roadmap_repository import RoadmapRepository
-from app.services.dashboard_service import DashboardService
 from app.schemas.dashboard import DashboardResponse
+from app.security.jwt import get_current_user
+from app.services.dashboard_service import DashboardService
 
 router = APIRouter(
     prefix="/dashboard",
@@ -15,11 +16,11 @@ router = APIRouter(
 
 
 @router.get(
-    "/{student_id}",
+    "",
     response_model=DashboardResponse,
 )
 def get_dashboard(
-    student_id: int,
+    current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
 
@@ -29,4 +30,6 @@ def get_dashboard(
         JobRepository(db),
     )
 
-    return service.get_dashboard(student_id)
+    return service.get_dashboard(
+        current_user["sub"]
+    )

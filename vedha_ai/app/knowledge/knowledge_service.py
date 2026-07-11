@@ -1,32 +1,43 @@
-from app.knowledge.vector_store import (
-    build_vector_store,
-)
+from functools import lru_cache
+
+from app.knowledge.vector_store import build_vector_store
 
 
 class KnowledgeService:
     """
     Shared Knowledge Service for Vedha AI.
-    Builds the vector store once and
-    provides a reusable retriever.
+    Vector store is created only once when first used.
     """
 
     def __init__(self):
+        self.vector_store = None
+        self.retriever = None
 
-        self.vector_store = build_vector_store()
+    def _initialize(self):
 
-        self.retriever = (
-            self.vector_store.as_retriever(
-                search_kwargs={
-                    "k": 5,
-                }
+        if self.vector_store is None:
+
+            self.vector_store = build_vector_store()
+
+            self.retriever = (
+                self.vector_store.as_retriever(
+                    search_kwargs={
+                        "k": 5,
+                    }
+                )
             )
-        )
 
     def retrieve(
         self,
         query: str,
     ):
+
+        self._initialize()
+
         return self.retriever.invoke(query)
 
 
-knowledge_service = KnowledgeService()
+@lru_cache(maxsize=1)
+def get_knowledge_service():
+
+    return KnowledgeService()

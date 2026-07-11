@@ -1,5 +1,5 @@
 from app.knowledge.knowledge_service import (
-    knowledge_service,
+    get_knowledge_service,
 )
 
 
@@ -10,6 +10,8 @@ def retrieve_context(
     Retrieve relevant context from the
     Vedha AI Knowledge Base.
     """
+
+    knowledge_service = get_knowledge_service()
 
     documents = knowledge_service.retrieve(
         query

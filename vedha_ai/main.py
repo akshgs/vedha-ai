@@ -39,65 +39,87 @@ app.add_middleware(
 )
 
 
-# ---------------- Authentication ----------------
+# =========================
+# Authentication
+# =========================
 
 app.include_router(
     auth_router,
     prefix="/api/v1/auth",
-    tags=["Authentication"],
 )
 
-# ---------------- Resume ----------------
+
+# =========================
+# Resume
+# router prefix = /resume
+# Final URL = /api/v1/resume/*
+# =========================
 
 app.include_router(
     resume_router,
-    prefix="/api/v1/resume",
-    tags=["Resume"],
+    prefix="/api/v1",
 )
 
-# ---------------- Jobs ----------------
+
+# =========================
+# Jobs
+# router prefix = /jobs
+# Final URL = /api/v1/jobs/*
+# =========================
 
 app.include_router(
     jobs_router,
-    prefix="/api/v1/jobs",
-    tags=["Jobs"],
+    prefix="/api/v1",
 )
 
-# ---------------- Job Scraper ----------------
+
+# =========================
+# Job Scraper
+# router prefix = /scraper
+# Final URL = /api/v1/scraper/*
+# =========================
 
 app.include_router(
     scraper_router,
-    prefix="/api/v1/scraper",
-    tags=["Scraper"],
+    prefix="/api/v1",
 )
 
-# ---------------- Roadmap ----------------
+
+# =========================
+# Roadmap
+# router prefix = /roadmap
+# Final URL = /api/v1/roadmap/*
+# =========================
 
 app.include_router(
     roadmap_router,
     prefix="/api/v1",
 )
 
-# ---------------- Dashboard ----------------
+
+# =========================
+# Dashboard
+# router prefix = /dashboard
+# Final URL = /api/v1/dashboard
+# =========================
 
 app.include_router(
     dashboard_router,
     prefix="/api/v1",
 )
 
-# ---------------- Interview ----------------
 
-# NOTE:
-# interview.py already has:
-# APIRouter(prefix="/interview")
-# so only "/api/v1" should be added here.
+# =========================
+# Interview
+# router prefix = /interview
+# Final URL = /api/v1/interview/*
+# =========================
 
 app.include_router(
     interview_router,
     prefix="/api/v1",
 )
 
-# ---------------- Root ----------------
 
 @app.get("/")
 def root():
