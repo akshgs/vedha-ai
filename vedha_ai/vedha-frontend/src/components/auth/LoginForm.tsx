@@ -1,40 +1,61 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, LogIn } from "lucide-react";
 
 import Button from "@/components/ui/button/Button";
-import { loginSchema, type LoginFormData } from "@/schemas/auth";
 import useAuth from "@/hooks/useAuth";
+import {
+  loginSchema,
+  type LoginFormData,
+} from "@/schemas/auth";
 
 export default function LoginForm() {
-  const [error, setError] = useState("");
-
   const navigate = useNavigate();
-  const { login } = useAuth();
+
+  const {
+    login,
+    isAuthenticated,
+    loading,
+  } = useAuth();
+
+  const [error, setError] = useState("");
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: {
+      errors,
+      isSubmitting,
+    },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   });
 
-  async function onSubmit(data: LoginFormData) {
+  useEffect(() => {
+    if (!loading && isAuthenticated) {
+      navigate("/dashboard", {
+        replace: true,
+      });
+    }
+  }, [
+    isAuthenticated,
+    loading,
+    navigate,
+  ]);
+
+  async function onSubmit(
+    data: LoginFormData
+  ) {
     try {
       setError("");
 
       await login(data);
-
-      navigate("/dashboard", {
-        replace: true,
-      });
     } catch (err: any) {
       setError(
         err?.response?.data?.detail ??
-          "Login failed. Please check your credentials."
+          "Login failed. Please try again."
       );
     }
   }
@@ -44,9 +65,8 @@ export default function LoginForm() {
       onSubmit={handleSubmit(onSubmit)}
       className="space-y-6"
     >
-      {/* Email */}
       <div>
-        <label className="mb-2 block text-sm font-medium text-slate-300">
+        <label className="mb-2 block text-sm text-slate-300">
           Email
         </label>
 
@@ -54,7 +74,7 @@ export default function LoginForm() {
           type="email"
           placeholder="you@example.com"
           {...register("email")}
-          className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none transition-all focus:border-cyan-500"
+          className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none transition focus:border-cyan-500"
         />
 
         {errors.email && (
@@ -64,9 +84,8 @@ export default function LoginForm() {
         )}
       </div>
 
-      {/* Password */}
       <div>
-        <label className="mb-2 block text-sm font-medium text-slate-300">
+        <label className="mb-2 block text-sm text-slate-300">
           Password
         </label>
 
@@ -74,7 +93,7 @@ export default function LoginForm() {
           type="password"
           placeholder="••••••••"
           {...register("password")}
-          className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none transition-all focus:border-cyan-500"
+          className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none transition focus:border-cyan-500"
         />
 
         {errors.password && (
@@ -84,20 +103,18 @@ export default function LoginForm() {
         )}
       </div>
 
-      {/* Error */}
       {error && (
         <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400">
           {error}
         </div>
       )}
 
-      {/* Submit */}
       <Button
         type="submit"
         className="w-full"
-        disabled={isSubmitting}
+        disabled={isSubmitting || loading}
       >
-        {isSubmitting ? (
+        {isSubmitting || loading ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             Signing In...
@@ -105,10 +122,27 @@ export default function LoginForm() {
         ) : (
           <>
             <LogIn className="mr-2 h-4 w-4" />
-            Sign In
+            Login
           </>
         )}
       </Button>
     </form>
   );
+}async function onSubmit(data: LoginFormData) {
+  try {
+    setError("");
+
+    await login(data);
+
+    console.log("TOKEN:", localStorage.getItem("access_token"));
+
+    navigate("/dashboard", {
+      replace: true,
+    });
+  } catch (err: any) {
+    setError(
+      err?.response?.data?.detail ??
+        "Login failed. Please try again."
+    );
+  }
 }

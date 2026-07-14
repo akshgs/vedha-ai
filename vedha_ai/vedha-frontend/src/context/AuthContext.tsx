@@ -18,10 +18,8 @@ type AuthContextType = {
   user: User | null;
   loading: boolean;
   isAuthenticated: boolean;
-
   login: (data: LoginRequest) => Promise<void>;
   logout: () => void;
-
   refreshUser: () => Promise<void>;
 };
 
@@ -35,20 +33,18 @@ type Props = {
 
 export function AuthProvider({ children }: Props) {
   const [user, setUser] = useState<User | null>(null);
-
   const [loading, setLoading] = useState(true);
 
-  async function refreshUser() {
+  const refreshUser = async () => {
     try {
       const currentUser = await getCurrentUser();
-
       setUser(currentUser);
     } catch {
       setUser(null);
     }
-  }
+  };
 
-  async function login(data: LoginRequest) {
+  const login = async (data: LoginRequest) => {
     const response = await loginService(data);
 
     localStorage.setItem(
@@ -56,30 +52,36 @@ export function AuthProvider({ children }: Props) {
       response.access_token
     );
 
-    await refreshUser();
-  }
+    const currentUser = await getCurrentUser();
 
-  function logout() {
+    setUser(currentUser);
+  };
+
+  const logout = () => {
     logoutService();
-
+    localStorage.removeItem("access_token");
     setUser(null);
-  }
+  };
 
   useEffect(() => {
-    async function initialize() {
-      const token = localStorage.getItem(
-        "access_token"
-      );
+    const initialize = async () => {
+      const token = localStorage.getItem("access_token");
 
       if (!token) {
         setLoading(false);
         return;
       }
 
-      await refreshUser();
-
-      setLoading(false);
-    }
+      try {
+        const currentUser = await getCurrentUser();
+        setUser(currentUser);
+      } catch {
+        localStorage.removeItem("access_token");
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
 
     initialize();
   }, []);
@@ -89,7 +91,7 @@ export function AuthProvider({ children }: Props) {
       value={{
         user,
         loading,
-        isAuthenticated: !!user,
+        isAuthenticated: user !== null,
         login,
         logout,
         refreshUser,

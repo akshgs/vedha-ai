@@ -6,7 +6,18 @@ type Props = {
 };
 
 export default function ProtectedRoute({ children }: Props) {
-  const { loading, isAuthenticated } = useAuth();
+  const {
+    loading,
+    isAuthenticated,
+    user,
+  } = useAuth();
+
+  console.log({
+    loading,
+    isAuthenticated,
+    user,
+    token: localStorage.getItem("access_token"),
+  });
 
   if (loading) {
     return (
