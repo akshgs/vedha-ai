@@ -1,14 +1,18 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, LogIn } from "lucide-react";
 
 import Button from "@/components/ui/button/Button";
 import { loginSchema, type LoginFormData } from "@/schemas/auth";
-import { login } from "@/services/auth";
+import useAuth from "@/hooks/useAuth";
 
 export default function LoginForm() {
   const [error, setError] = useState("");
+
+  const navigate = useNavigate();
+  const { login } = useAuth();
 
   const {
     register,
@@ -22,22 +26,15 @@ export default function LoginForm() {
     try {
       setError("");
 
-      const response = await login(data);
+      await login(data);
 
-      localStorage.setItem(
-        "access_token",
-        response.access_token
-      );
-
-      console.log("Login successful");
-
-      // TODO:
-      // navigate("/dashboard");
-
+      navigate("/dashboard", {
+        replace: true,
+      });
     } catch (err: any) {
       setError(
         err?.response?.data?.detail ??
-          "Login failed. Please try again."
+          "Login failed. Please check your credentials."
       );
     }
   }
@@ -47,8 +44,9 @@ export default function LoginForm() {
       onSubmit={handleSubmit(onSubmit)}
       className="space-y-6"
     >
+      {/* Email */}
       <div>
-        <label className="mb-2 block text-sm text-slate-300">
+        <label className="mb-2 block text-sm font-medium text-slate-300">
           Email
         </label>
 
@@ -56,7 +54,7 @@ export default function LoginForm() {
           type="email"
           placeholder="you@example.com"
           {...register("email")}
-          className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none transition focus:border-cyan-500"
+          className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none transition-all focus:border-cyan-500"
         />
 
         {errors.email && (
@@ -66,8 +64,9 @@ export default function LoginForm() {
         )}
       </div>
 
+      {/* Password */}
       <div>
-        <label className="mb-2 block text-sm text-slate-300">
+        <label className="mb-2 block text-sm font-medium text-slate-300">
           Password
         </label>
 
@@ -75,7 +74,7 @@ export default function LoginForm() {
           type="password"
           placeholder="••••••••"
           {...register("password")}
-          className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none transition focus:border-cyan-500"
+          className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none transition-all focus:border-cyan-500"
         />
 
         {errors.password && (
@@ -85,12 +84,14 @@ export default function LoginForm() {
         )}
       </div>
 
+      {/* Error */}
       {error && (
         <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400">
           {error}
         </div>
       )}
 
+      {/* Submit */}
       <Button
         type="submit"
         className="w-full"
@@ -104,7 +105,7 @@ export default function LoginForm() {
         ) : (
           <>
             <LogIn className="mr-2 h-4 w-4" />
-            Login
+            Sign In
           </>
         )}
       </Button>
