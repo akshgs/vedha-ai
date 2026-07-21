@@ -2,20 +2,22 @@ import { useState } from "react";
 import { UploadCloud } from "lucide-react";
 
 import Button from "@/components/ui/button/Button";
-import { uploadResume } from "@/services/resume";
+import {
+  uploadResume,
+  type ResumeAnalysisResponse,
+} from "@/services/resume";
 
 type Props = {
-  onAnalysis: (data: any) => void;
+  onAnalysis: (data: ResumeAnalysisResponse) => void;
 };
 
 export default function ResumeUploader({
   onAnalysis,
 }: Props) {
   const [file, setFile] = useState<File | null>(null);
-
-  const [targetRole, setTargetRole] =
-    useState("Machine Learning Engineer");
-
+  const [targetRole, setTargetRole] = useState(
+    "Machine Learning Engineer"
+  );
   const [loading, setLoading] = useState(false);
 
   async function handleUpload() {
@@ -30,9 +32,8 @@ export default function ResumeUploader({
       );
 
       onAnalysis(result);
-    } catch (err) {
-      console.error(err);
-
+    } catch (error) {
+      console.error(error);
       alert("Resume upload failed.");
     } finally {
       setLoading(false);
@@ -40,22 +41,23 @@ export default function ResumeUploader({
   }
 
   return (
-    <div className="space-y-6 rounded-2xl border border-slate-800 bg-slate-900 p-8">
+    <div className="rounded-2xl border border-slate-800 bg-slate-900 p-8 space-y-6">
       <div>
-        <label className="mb-2 block text-sm text-slate-400">
+        <label className="mb-2 block text-sm font-medium text-slate-300">
           Target Role
         </label>
 
         <input
           value={targetRole}
-          onChange={(e) =>
-            setTargetRole(e.target.value)
-          }
-          className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 outline-none"
+          onChange={(e) => setTargetRole(e.target.value)}
+          className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none focus:border-cyan-500"
+          placeholder="Machine Learning Engineer"
         />
       </div>
 
-      <div>
+      <div className="rounded-xl border-2 border-dashed border-slate-700 p-8 text-center">
+        <UploadCloud className="mx-auto mb-4 h-12 w-12 text-cyan-400" />
+
         <input
           type="file"
           accept=".pdf"
@@ -64,10 +66,15 @@ export default function ResumeUploader({
               setFile(e.target.files[0]);
             }
           }}
+          className="mx-auto"
         />
 
+        <p className="mt-4 text-slate-400">
+          Upload your resume (PDF only)
+        </p>
+
         {file && (
-          <p className="mt-3 text-cyan-400">
+          <p className="mt-3 font-medium text-cyan-400">
             {file.name}
           </p>
         )}

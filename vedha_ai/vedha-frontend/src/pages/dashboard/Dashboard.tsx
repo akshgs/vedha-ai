@@ -1,6 +1,23 @@
 import { useEffect, useState } from "react";
+import {
+  Briefcase,
+  FileText,
+  GraduationCap,
+  MessageSquare,
+} from "lucide-react";
 
 import DashboardLayout from "@/layouts/DashboardLayout";
+
+import StatCard from "@/components/dashboard/StatCard";
+import SectionCard from "@/components/dashboard/SectionCard";
+import LoadingCard from "@/components/dashboard/LoadingCard";
+import QuickActions from "@/components/dashboard/QuickActions";
+import ProgressCard from "@/components/dashboard/ProgressCard";
+import AIInsights from "@/components/dashboard/AIInsights";
+import ActivityTimeline from "@/components/dashboard/ActivityTimeline";
+import InterviewChart from "@/components/charts/InterviewChart";
+import ResumeGauge from "@/components/charts/ResumeGauge";
+import WeeklyProgress from "@/components/charts/WeeklyProgress";
 import {
   getDashboard,
   type DashboardResponse,
@@ -11,7 +28,6 @@ export default function Dashboard() {
     useState<DashboardResponse | null>(null);
 
   const [loading, setLoading] = useState(true);
-
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -21,9 +37,10 @@ export default function Dashboard() {
         setError("");
 
         const data = await getDashboard();
-
         setDashboard(data);
       } catch (err: any) {
+        console.error(err);
+
         setError(
           err?.response?.data?.detail ??
             "Failed to load dashboard."
@@ -36,167 +53,303 @@ export default function Dashboard() {
     loadDashboard();
   }, []);
 
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+          <LoadingCard />
+          <LoadingCard />
+          <LoadingCard />
+          <LoadingCard />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <DashboardLayout>
+        <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-6 text-red-400">
+          {error}
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!dashboard) {
+    return (
+      <DashboardLayout>
+        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 text-slate-300">
+          No dashboard data available.
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout>
-      <div className="space-y-8">
-        <div>
-          <h2 className="text-3xl font-bold">
-            Dashboard Overview
-          </h2>
+      <div className="mx-auto max-w-7xl space-y-8">
+        {/* Header */}
 
-          <p className="mt-2 text-slate-400">
-            Welcome back{" "}
-            <span className="font-semibold text-cyan-400">
-              {dashboard?.student_name ?? "Student"}
-            </span>
-            .
-          </p>
+        <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <h1 className="text-4xl font-bold text-white">
+              Welcome back, {dashboard.student_name} 👋
+            </h1>
+
+            <p className="mt-2 text-slate-400">
+              Ready to continue your AI career journey?
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-5 py-3">
+            <p className="text-sm text-cyan-300">
+              Career Readiness
+            </p>
+
+            <h2 className="text-3xl font-bold text-cyan-400">
+              {dashboard.career_readiness}%
+            </h2>
+          </div>
         </div>
 
-        {loading && (
-          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 text-slate-300">
-            Loading dashboard...
-          </div>
-        )}
+        {/* Stats */}
 
-        {error && (
-          <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-red-400">
-            {error}
-          </div>
-        )}
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
 
-        {!loading && dashboard && (
-          <>
-            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-              <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
-                <p className="text-slate-400">
-                  Resume Score
-                </p>
+          <StatCard
+            title="Resume Score"
+            value={`${dashboard.resume_score}%`}
+            icon={<FileText size={28} className="text-white" />}
+            color="bg-cyan-600"
+            textColor="text-cyan-400"
+          />
 
-                <h3 className="mt-3 text-4xl font-bold text-cyan-400">
-                  {dashboard.resume_score}%
-                </h3>
-              </div>
+          <StatCard
+            title="Total Jobs"
+            value={dashboard.total_jobs}
+            icon={<Briefcase size={28} className="text-white" />}
+            color="bg-emerald-600"
+            textColor="text-emerald-400"
+          />
 
-              <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
-                <p className="text-slate-400">
-                  Total Jobs
-                </p>
+          <StatCard
+            title="Roadmap Progress"
+            value={`${dashboard.roadmap_progress}%`}
+            icon={<GraduationCap size={28} className="text-white" />}
+            color="bg-violet-600"
+            textColor="text-violet-400"
+          />
 
-                <h3 className="mt-3 text-4xl font-bold text-emerald-400">
-                  {dashboard.total_jobs}
-                </h3>
-              </div>
+          <StatCard
+            title="Interviews"
+            value={dashboard.total_interviews}
+            icon={<MessageSquare size={28} className="text-white" />}
+            color="bg-amber-600"
+            textColor="text-amber-400"
+          />
 
-              <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
-                <p className="text-slate-400">
-                  Roadmap Progress
-                </p>
+        </div>
 
-                <h3 className="mt-3 text-4xl font-bold text-violet-400">
-                  {dashboard.roadmap_progress}%
-                </h3>
-              </div>
+        {/* Quick Actions */}
 
-              <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
-                <p className="text-slate-400">
-                  Interviews
-                </p>
+        <SectionCard title="Quick Actions">
+          <QuickActions />
+        </SectionCard>
 
-                <h3 className="mt-3 text-4xl font-bold text-amber-400">
-                  {dashboard.total_interviews}
-                </h3>
-              </div>
+        {/* Progress */}
+
+        <div className="grid gap-6 lg:grid-cols-2">
+
+          <ProgressCard
+            title="Career Readiness"
+            value={dashboard.career_readiness}
+            color="bg-cyan-500"
+          />
+
+          <ProgressCard
+            title="Roadmap Progress"
+            value={dashboard.roadmap_progress}
+            color="bg-violet-500"
+          />
+
+        </div>
+
+        {/* AI Insights */}
+
+        <SectionCard title="AI Insights">
+          <AIInsights
+            resumeScore={dashboard.resume_score}
+            roadmapProgress={dashboard.roadmap_progress}
+            completedInterviews={dashboard.completed_interviews}
+            totalJobs={dashboard.total_jobs}
+          />
+        </SectionCard>
+
+        {/* Analytics */}
+
+        <div className="grid gap-6 lg:grid-cols-2">
+          <WeeklyProgress />
+
+          <ResumeGauge
+            score={dashboard.resume_score}
+          />
+        </div>
+
+        <div className="mt-6">
+          <InterviewChart
+            score={dashboard.average_interview_score}
+          />
+        </div>
+
+        {/* Career Summary */}
+
+        <SectionCard title="Career Summary">
+
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+
+            <div>
+              <p className="text-slate-400">
+                Completed Interviews
+              </p>
+
+              <h3 className="mt-2 text-3xl font-bold text-cyan-400">
+                {dashboard.completed_interviews}
+              </h3>
             </div>
 
-            <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
-              <h3 className="mb-4 text-xl font-bold">
-                Career Summary
+            <div>
+              <p className="text-slate-400">
+                Average Score
+              </p>
+
+              <h3 className="mt-2 text-3xl font-bold text-emerald-400">
+                {dashboard.average_interview_score}%
               </h3>
-
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                <div>
-                  <p className="text-slate-400">
-                    Completed Interviews
-                  </p>
-
-                  <p className="mt-2 text-2xl font-bold">
-                    {dashboard.completed_interviews}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-slate-400">
-                    Average Score
-                  </p>
-
-                  <p className="mt-2 text-2xl font-bold">
-                    {dashboard.average_interview_score}%
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-slate-400">
-                    Best Score
-                  </p>
-
-                  <p className="mt-2 text-2xl font-bold">
-                    {dashboard.best_interview_score}%
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-slate-400">
-                    Career Readiness
-                  </p>
-
-                  <p className="mt-2 text-2xl font-bold text-cyan-400">
-                    {dashboard.career_readiness}%
-                  </p>
-                </div>
-              </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
-              <h3 className="mb-4 text-xl font-bold">
-                Recent Interviews
+            <div>
+              <p className="text-slate-400">
+                Best Score
+              </p>
+
+              <h3 className="mt-2 text-3xl font-bold text-violet-400">
+                {dashboard.best_interview_score}%
+              </h3>
+            </div>
+
+            <div>
+              <p className="text-slate-400">
+                Career Readiness
+              </p>
+
+              <h3 className="mt-2 text-3xl font-bold text-amber-400">
+                {dashboard.career_readiness}%
+              </h3>
+            </div>
+
+          </div>
+
+        </SectionCard>
+
+        {/* Recent Interviews */}
+
+        <SectionCard title="Recent Interviews">
+
+          {dashboard.recent_interviews.length === 0 ? (
+
+            <div className="rounded-xl border border-dashed border-slate-700 p-10 text-center">
+              <MessageSquare className="mx-auto mb-4 h-12 w-12 text-slate-500" />
+
+              <h3 className="text-lg font-semibold">
+                No Interviews Yet
               </h3>
 
-              {dashboard.recent_interviews.length === 0 ? (
-                <p className="text-slate-400">
-                  No interview history yet.
-                </p>
-              ) : (
-                <div className="space-y-4">
-                  {dashboard.recent_interviews.map(
-                    (interview) => (
-                      <div
-                        key={interview.interview_id}
-                        className="flex items-center justify-between rounded-xl bg-slate-800 p-4"
+              <p className="mt-2 text-slate-400">
+                Start your first AI interview from the Interview AI page.
+              </p>
+            </div>
+
+          ) : (
+
+            <div className="space-y-4">
+
+              {dashboard.recent_interviews.map((item) => {
+
+                const statusLabel =
+                  item.status === "in_progress"
+                    ? "In Progress"
+                    : item.status === "completed"
+                    ? "Completed"
+                    : item.status;
+
+                return (
+                  <div
+                    key={item.interview_id}
+                    className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-950 p-5 transition-all duration-300 hover:scale-[1.02] hover:border-cyan-500 hover:bg-slate-900"
+                  >
+
+                    <div>
+
+                      <h3 className="text-lg font-semibold text-white">
+                        {item.target_role}
+                      </h3>
+
+                      <p className="mt-1 text-sm text-slate-400">
+                        {new Date(item.created_at).toLocaleDateString(
+                          "en-IN",
+                          {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                          }
+                        )}
+                      </p>
+
+                    </div>
+
+                    <div className="text-right">
+
+                      <span
+                        className={`rounded-full px-4 py-1 text-xs font-semibold uppercase tracking-wide ${
+                          item.status === "completed"
+                            ? "bg-emerald-500/20 text-emerald-400"
+                            : "bg-yellow-500/20 text-yellow-400"
+                        }`}
                       >
-                        <div>
-                          <p className="font-semibold">
-                            {interview.target_role}
-                          </p>
+                        {statusLabel}
+                      </span>
 
-                          <p className="text-sm text-slate-400">
-                            {interview.status}
-                          </p>
-                        </div>
+                      <p className="mt-3 text-xl font-bold text-cyan-400">
+                        {item.overall_score !== null
+                          ? `${item.overall_score}%`
+                          : "Pending"}
+                      </p>
 
-                        <div className="text-right">
-                          <p className="text-xl font-bold text-cyan-400">
-                            {interview.overall_score}%
-                          </p>
-                        </div>
-                      </div>
-                    )
-                  )}
-                </div>
-              )}
+                    </div>
+
+                  </div>
+                );
+              })}
+
             </div>
-          </>
-        )}
+
+          )}
+
+        </SectionCard>
+
+        {/* Recent Activity */}
+
+        <SectionCard title="Recent Activity">
+          <ActivityTimeline />
+        </SectionCard>
+
+        {/* Footer */}
+
+        <footer className="border-t border-slate-800 py-6 text-center text-sm text-slate-500">
+          Vedha AI © 2026 • Career Intelligence Platform
+        </footer>
+
       </div>
     </DashboardLayout>
   );

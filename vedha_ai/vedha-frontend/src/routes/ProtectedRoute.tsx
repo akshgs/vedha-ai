@@ -6,18 +6,14 @@ type Props = {
 };
 
 export default function ProtectedRoute({ children }: Props) {
-  const {
-    loading,
-    isAuthenticated,
-    user,
-  } = useAuth();
+  const { loading, isAuthenticated, user } = useAuth();
 
-  console.log({
-    loading,
-    isAuthenticated,
-    user,
-    token: localStorage.getItem("access_token"),
-  });
+  console.log("========== ProtectedRoute ==========");
+  console.log("loading =", loading);
+  console.log("isAuthenticated =", isAuthenticated);
+  console.log("user =", user);
+  console.log("token =", localStorage.getItem("access_token"));
+  console.log("====================================");
 
   if (loading) {
     return (
@@ -28,8 +24,11 @@ export default function ProtectedRoute({ children }: Props) {
   }
 
   if (!isAuthenticated) {
+    console.log("Redirecting to /login");
     return <Navigate to="/login" replace />;
   }
+
+  console.log("Access Granted");
 
   return <>{children}</>;
 }

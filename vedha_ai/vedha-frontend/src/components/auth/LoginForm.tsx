@@ -6,6 +6,7 @@ import { Loader2, LogIn } from "lucide-react";
 
 import Button from "@/components/ui/button/Button";
 import useAuth from "@/hooks/useAuth";
+
 import {
   loginSchema,
   type LoginFormData,
@@ -40,19 +41,39 @@ export default function LoginForm() {
       });
     }
   }, [
-    isAuthenticated,
     loading,
+    isAuthenticated,
     navigate,
   ]);
 
   async function onSubmit(
     data: LoginFormData
   ) {
+    alert("Login button clicked");
+
+    console.log("onSubmit Fired");
+    console.log("Login Data:", data);
+
     try {
       setError("");
 
+      console.log("Before login");
+
       await login(data);
+
+      console.log("After login");
+
+      console.log(
+        "TOKEN:",
+        localStorage.getItem("access_token")
+      );
+
+      navigate("/dashboard", {
+        replace: true,
+      });
     } catch (err: any) {
+      console.error("LOGIN ERROR:", err);
+
       setError(
         err?.response?.data?.detail ??
           "Login failed. Please try again."
@@ -62,7 +83,10 @@ export default function LoginForm() {
 
   return (
     <form
-      onSubmit={handleSubmit(onSubmit)}
+      onSubmit={(e) => {
+        console.log("FORM SUBMITTED");
+        handleSubmit(onSubmit)(e);
+      }}
       className="space-y-6"
     >
       <div>
@@ -73,6 +97,7 @@ export default function LoginForm() {
         <input
           type="email"
           placeholder="you@example.com"
+          autoComplete="email"
           {...register("email")}
           className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none transition focus:border-cyan-500"
         />
@@ -92,6 +117,7 @@ export default function LoginForm() {
         <input
           type="password"
           placeholder="••••••••"
+          autoComplete="current-password"
           {...register("password")}
           className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none transition focus:border-cyan-500"
         />
@@ -128,21 +154,4 @@ export default function LoginForm() {
       </Button>
     </form>
   );
-}async function onSubmit(data: LoginFormData) {
-  try {
-    setError("");
-
-    await login(data);
-
-    console.log("TOKEN:", localStorage.getItem("access_token"));
-
-    navigate("/dashboard", {
-      replace: true,
-    });
-  } catch (err: any) {
-    setError(
-      err?.response?.data?.detail ??
-        "Login failed. Please try again."
-    );
-  }
 }

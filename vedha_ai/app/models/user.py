@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from sqlalchemy import Boolean, DateTime, Integer, String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.base import Base
 
@@ -61,4 +61,16 @@ class User(Base):
     last_login: Mapped[datetime | None] = mapped_column(
         DateTime,
         nullable=True,
+    )
+
+    educations = relationship(
+        "Education",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+
+    experiences = relationship(
+        "Experience",
+        back_populates="user",
+        cascade="all, delete-orphan",
     )

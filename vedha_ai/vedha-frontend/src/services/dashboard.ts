@@ -22,7 +22,20 @@ export interface DashboardResponse {
 }
 
 export async function getDashboard(): Promise<DashboardResponse> {
-  const response = await api.get("/dashboard");
+  try {
+    const response = await api.get<DashboardResponse>("/dashboard");
 
-  return response.data;
+    console.log("Dashboard API Response:", response.data);
+
+    return response.data;
+  } catch (error: any) {
+    console.error("Dashboard API Error:", error);
+
+    if (error.response) {
+      console.error("Status:", error.response.status);
+      console.error("Data:", error.response.data);
+    }
+
+    throw error;
+  }
 }

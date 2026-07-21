@@ -67,6 +67,7 @@ export async function evaluateInterview(
 
   return response.data;
 }
+
 /* ===========================
    Interview History
 =========================== */
@@ -85,7 +86,62 @@ export interface InterviewHistoryResponse {
 }
 
 export async function getInterviewHistory(): Promise<InterviewHistoryResponse> {
-  const response = await api.get("/interview/history");
+  const response = await api.get(
+    "/interview/history"
+  );
+
+  return response.data;
+}
+
+/* ===========================
+   Complete Interview
+=========================== */
+
+export interface InterviewCompleteRequest {
+  interview_id: number;
+}
+
+export interface InterviewCompleteResponse {
+  interview_id: number;
+  status: string;
+  overall_score: number;
+  message: string;
+}
+
+export async function completeInterview(
+  data: InterviewCompleteRequest
+): Promise<InterviewCompleteResponse> {
+  const response = await api.post(
+    "/interview/complete",
+    data
+  );
+
+  return response.data;
+}
+
+/* ===========================
+   Interview Report
+=========================== */
+
+export interface InterviewReportResponse {
+  overall_assessment: string;
+  technical_level: string;
+  communication_level: string;
+  strengths: string[];
+  weaknesses: string[];
+  recommended_topics: string[];
+  recommended_projects: string[];
+  job_readiness: string;
+  next_learning_plan: string;
+  hiring_recommendation: string;
+}
+
+export async function getInterviewReport(
+  interviewId: number
+): Promise<InterviewReportResponse> {
+  const response = await api.get(
+    `/interview/report/${interviewId}`
+  );
 
   return response.data;
 }

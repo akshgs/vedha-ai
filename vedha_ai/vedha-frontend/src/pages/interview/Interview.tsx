@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import DashboardLayout from "@/layouts/DashboardLayout";
 
@@ -11,45 +12,65 @@ import EvaluationCard from "@/components/interview/EvaluationCard";
 import {
   generateInterview,
   evaluateInterview,
+  completeInterview,
   type InterviewGenerateResponse,
   type InterviewEvaluateResponse,
 } from "@/services/interview";
 
 export default function Interview() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const targetRole: string =
+    (location.state as { target_role?: string })?.target_role ??
+    "Machine Learning Engineer";
+
   const [interview, setInterview] =
     useState<InterviewGenerateResponse | null>(null);
 
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
 
-  const [currentQuestion, setCurrentQuestion] =
-    useState(0);
+  const [currentQuestion, setCurrentQuestion] = useState(0);
 
   const [answers, setAnswers] = useState<string[]>([]);
 
   const [result, setResult] =
     useState<InterviewEvaluateResponse | null>(null);
 
-  const [evaluating, setEvaluating] =
-    useState(false);
+  const [evaluating, setEvaluating] = useState(false);
+
+  // Fix #3: track whether the score for the current question has been
+  // shown to the user yet. "Next" first reveals the score, then advances.
+  const [awaitingAdvance, setAwaitingAdvance] = useState(false);
 
   useEffect(() => {
     async function loadInterview() {
+      const storedId = Number(localStorage.getItem("student_id"));
+
+      if (!storedId) {
+        setLoadError("You must be logged in to start an interview.");
+        setLoading(false);
+        return;
+      }
+
       try {
         const data = await generateInterview({
-          student_id: 2,
-          target_role: "Machine Learning Engineer",
+          student_id: storedId,
+          target_role: targetRole,
         });
 
         setInterview(data);
       } catch (error) {
         console.error(error);
+        setLoadError("Failed to load interview. Please try again.");
       } finally {
         setLoading(false);
       }
     }
 
     loadInterview();
-  }, []);
+  }, [targetRole]);
 
   const questions = useMemo(() => {
     if (!interview) return [];
@@ -77,8 +98,13 @@ export default function Interview() {
     });
   }
 
-  async function submitInterview() {
-    if (!interview) return;
+  async function runEvaluation() {
+    if (!interview) return null;
+
+    if (!answers[currentQuestion]?.trim()) {
+      alert("Please answer the current question.");
+      return null;
+    }
 
     try {
       setEvaluating(true);
@@ -86,33 +112,86 @@ export default function Interview() {
       const response = await evaluateInterview({
         interview_id: interview.interview_id,
         question: questions[currentQuestion],
-        answer: answers[currentQuestion] ?? "",
-        target_role: "Machine Learning Engineer",
+        answer: answers[currentQuestion],
+        target_role: targetRole,
       });
 
       setResult(response);
+      return response;
     } catch (error) {
       console.error(error);
+      alert("Failed to evaluate your answer. Please try again.");
+      return null;
     } finally {
       setEvaluating(false);
     }
   }
 
+  async function handleNext() {
+    // Step 1: evaluate and show the score, without advancing yet.
+    if (!awaitingAdvance) {
+      const response = await runEvaluation();
+
+      if (response) {
+        setAwaitingAdvance(true);
+      }
+
+      return;
+    }
+
+    // Step 2: user has seen the score, now advance.
+    setResult(null);
+    setAwaitingAdvance(false);
+    setCurrentQuestion((prev) => prev + 1);
+  }
+
+  async function handleSubmit() {
+    if (!interview) return;
+
+    // Same two-step flow on the last question: evaluate + show score first.
+    if (!awaitingAdvance) {
+      const response = await runEvaluation();
+
+      if (response) {
+        setAwaitingAdvance(true);
+      }
+
+      return;
+    }
+
+    try {
+      setEvaluating(true);
+
+      await completeInterview({
+        interview_id: interview.interview_id,
+      });
+
+      navigate(`/interview/report/${interview.interview_id}`);
+    } catch (error) {
+      console.error(error);
+      alert("Failed to submit interview. Please try again.");
+    } finally {
+      setEvaluating(false);
+    }
+  }
+
+  const isLastQuestion = currentQuestion === questions.length - 1;
+
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="rounded-2xl bg-slate-900 p-8 text-center text-white">
-          Generating AI Interview...
+        <div className="p-6 text-center text-gray-500">
+          Loading interview...
         </div>
       </DashboardLayout>
     );
   }
 
-  if (!interview) {
+  if (loadError || !interview || questions.length === 0) {
     return (
       <DashboardLayout>
-        <div className="rounded-2xl bg-red-500/10 p-8 text-center text-red-400">
-          Failed to generate interview.
+        <div className="p-6 text-center text-red-500">
+          {loadError || "Failed to load interview. Please try again."}
         </div>
       </DashboardLayout>
     );
@@ -120,24 +199,7 @@ export default function Interview() {
 
   return (
     <DashboardLayout>
-      <div className="mx-auto max-w-5xl space-y-8">
-
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-4xl font-bold text-white">
-              AI Interview
-            </h1>
-
-            <p className="mt-2 text-slate-400">
-              Interview ID : {interview.interview_id}
-            </p>
-          </div>
-
-          <div className="rounded-xl bg-cyan-500/20 px-5 py-3 font-bold text-cyan-400">
-            {currentQuestion + 1} / {questions.length}
-          </div>
-        </div>
-
+      <div className="max-w-3xl mx-auto p-6 space-y-6">
         <ProgressBar
           current={currentQuestion + 1}
           total={questions.length}
@@ -153,46 +215,9 @@ export default function Interview() {
           onChange={updateAnswer}
         />
 
-        <div className="flex justify-between">
-
-          <button
-            disabled={currentQuestion === 0}
-            onClick={() =>
-              setCurrentQuestion((prev) => prev - 1)
-            }
-            className="rounded-xl bg-slate-800 px-6 py-3 text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            Previous
-          </button>
-
-          {currentQuestion === questions.length - 1 ? (
-            <button
-              onClick={submitInterview}
-              disabled={evaluating}
-              className="rounded-xl bg-emerald-600 px-6 py-3 font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-50"
-            >
-              {evaluating
-                ? "Evaluating..."
-                : "Submit Interview"}
-            </button>
-          ) : (
-            <button
-              onClick={() =>
-                setCurrentQuestion((prev) => prev + 1)
-              }
-              className="rounded-xl bg-cyan-600 px-6 py-3 font-semibold text-white transition hover:bg-cyan-500"
-            >
-              Next
-            </button>
-          )}
-
-        </div>
-
         {result && (
-          <div className="space-y-8">
-
+          <>
             <div className="grid gap-6 md:grid-cols-3">
-
               <ScoreCard
                 title="Technical Score"
                 score={result.technical_score}
@@ -207,11 +232,9 @@ export default function Interview() {
                 title="Overall Score"
                 score={result.overall_score}
               />
-
             </div>
 
             <div className="grid gap-6 lg:grid-cols-3">
-
               <EvaluationCard
                 title="Strengths"
                 items={result.strengths}
@@ -229,12 +252,37 @@ export default function Interview() {
                 items={result.suggestions}
                 color="text-cyan-400"
               />
-
             </div>
-
-          </div>
+          </>
         )}
 
+        <div className="flex justify-end gap-3">
+          {!isLastQuestion ? (
+            <button
+              onClick={handleNext}
+              disabled={evaluating}
+              className="px-4 py-2 rounded-lg bg-blue-600 text-white disabled:opacity-50"
+            >
+              {evaluating
+                ? "Evaluating..."
+                : awaitingAdvance
+                ? "Next Question"
+                : "Evaluate Answer"}
+            </button>
+          ) : (
+            <button
+              onClick={handleSubmit}
+              disabled={evaluating}
+              className="px-4 py-2 rounded-lg bg-green-600 text-white disabled:opacity-50"
+            >
+              {evaluating
+                ? "Submitting..."
+                : awaitingAdvance
+                ? "Finish & View Report"
+                : "Evaluate Answer"}
+            </button>
+          )}
+        </div>
       </div>
     </DashboardLayout>
   );

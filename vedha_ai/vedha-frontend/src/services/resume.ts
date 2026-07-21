@@ -5,6 +5,8 @@ export interface ResumeAnalysisResponse {
   filename: string;
   target_role: string;
 
+  ats_score: number;
+
   extracted_skills: string[];
   matched_skills: string[];
   missing_skills: string[];

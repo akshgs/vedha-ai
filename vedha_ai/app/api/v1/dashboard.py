@@ -23,7 +23,6 @@ def get_dashboard(
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-
     service = DashboardService(
         DashboardRepository(db),
         RoadmapRepository(db),
@@ -31,5 +30,5 @@ def get_dashboard(
     )
 
     return service.get_dashboard(
-        current_user["sub"]
+        current_user.id
     )

@@ -1,3 +1,4 @@
+from app.ai.ats_score import calculate_ats_score
 from app.ai.resume_feedback import generate_feedback
 from app.ai.skill_matcher import calculate_role_match
 from app.nlp.skill_extractor import ROLE_SKILLS, extract_skills
@@ -43,6 +44,11 @@ class ResumeService:
             target_role,
         )
 
+        ats_score = calculate_ats_score(
+            resume_text=resume_text,
+            match_percent=match["match_percent"],
+        )
+
         feedback = await generate_feedback(
             role=target_role,
             matched_skills=match["matched_skills"],
@@ -66,6 +72,7 @@ class ResumeService:
             "extracted_skills": skills,
             "total_skills_found": len(skills),
             "match_percent": match["match_percent"],
+            "ats_score": ats_score,
             "matched_skills": match["matched_skills"],
             "missing_skills": match["missing_skills"],
             "ai_feedback": feedback,
