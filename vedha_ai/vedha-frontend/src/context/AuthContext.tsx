@@ -38,6 +38,13 @@ export function AuthProvider({ children }: Props) {
   const refreshUser = async () => {
     try {
       const currentUser = await getCurrentUser();
+
+      localStorage.setItem("student_id", String(currentUser.id));
+      localStorage.setItem("user_id", String(currentUser.id));
+      localStorage.setItem("user_name", currentUser.name);
+      localStorage.setItem("user_email", currentUser.email);
+      localStorage.setItem("user_role", currentUser.role);
+
       setUser(currentUser);
     } catch {
       setUser(null);
@@ -54,12 +61,25 @@ export function AuthProvider({ children }: Props) {
 
     const currentUser = await getCurrentUser();
 
+    localStorage.setItem("student_id", String(currentUser.id));
+    localStorage.setItem("user_id", String(currentUser.id));
+    localStorage.setItem("user_name", currentUser.name);
+    localStorage.setItem("user_email", currentUser.email);
+    localStorage.setItem("user_role", currentUser.role);
+
     setUser(currentUser);
   };
 
   const logout = () => {
     logoutService();
+
     localStorage.removeItem("access_token");
+    localStorage.removeItem("student_id");
+    localStorage.removeItem("user_id");
+    localStorage.removeItem("user_name");
+    localStorage.removeItem("user_email");
+    localStorage.removeItem("user_role");
+
     setUser(null);
   };
 
@@ -74,9 +94,22 @@ export function AuthProvider({ children }: Props) {
 
       try {
         const currentUser = await getCurrentUser();
+
+        localStorage.setItem("student_id", String(currentUser.id));
+        localStorage.setItem("user_id", String(currentUser.id));
+        localStorage.setItem("user_name", currentUser.name);
+        localStorage.setItem("user_email", currentUser.email);
+        localStorage.setItem("user_role", currentUser.role);
+
         setUser(currentUser);
       } catch {
         localStorage.removeItem("access_token");
+        localStorage.removeItem("student_id");
+        localStorage.removeItem("user_id");
+        localStorage.removeItem("user_name");
+        localStorage.removeItem("user_email");
+        localStorage.removeItem("user_role");
+
         setUser(null);
       } finally {
         setLoading(false);

@@ -21,7 +21,7 @@ export default function Interview() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const targetRole: string =
+  const targetRole =
     (location.state as { target_role?: string })?.target_role ??
     "Machine Learning Engineer";
 
@@ -32,16 +32,12 @@ export default function Interview() {
   const [loadError, setLoadError] = useState("");
 
   const [currentQuestion, setCurrentQuestion] = useState(0);
-
   const [answers, setAnswers] = useState<string[]>([]);
 
   const [result, setResult] =
     useState<InterviewEvaluateResponse | null>(null);
 
   const [evaluating, setEvaluating] = useState(false);
-
-  // Fix #3: track whether the score for the current question has been
-  // shown to the user yet. "Next" first reveals the score, then advances.
   const [awaitingAdvance, setAwaitingAdvance] = useState(false);
 
   useEffect(() => {
@@ -49,7 +45,9 @@ export default function Interview() {
       const storedId = Number(localStorage.getItem("student_id"));
 
       if (!storedId) {
-        setLoadError("You must be logged in to start an interview.");
+        setLoadError(
+          "You must be logged in to start an interview."
+        );
         setLoading(false);
         return;
       }
@@ -63,7 +61,9 @@ export default function Interview() {
         setInterview(data);
       } catch (error) {
         console.error(error);
-        setLoadError("Failed to load interview. Please try again.");
+        setLoadError(
+          "Failed to load interview. Please try again."
+        );
       } finally {
         setLoading(false);
       }
@@ -120,7 +120,9 @@ export default function Interview() {
       return response;
     } catch (error) {
       console.error(error);
-      alert("Failed to evaluate your answer. Please try again.");
+      alert(
+        "Failed to evaluate your answer. Please try again."
+      );
       return null;
     } finally {
       setEvaluating(false);
@@ -128,7 +130,6 @@ export default function Interview() {
   }
 
   async function handleNext() {
-    // Step 1: evaluate and show the score, without advancing yet.
     if (!awaitingAdvance) {
       const response = await runEvaluation();
 
@@ -139,7 +140,6 @@ export default function Interview() {
       return;
     }
 
-    // Step 2: user has seen the score, now advance.
     setResult(null);
     setAwaitingAdvance(false);
     setCurrentQuestion((prev) => prev + 1);
@@ -148,7 +148,6 @@ export default function Interview() {
   async function handleSubmit() {
     if (!interview) return;
 
-    // Same two-step flow on the last question: evaluate + show score first.
     if (!awaitingAdvance) {
       const response = await runEvaluation();
 
@@ -169,13 +168,16 @@ export default function Interview() {
       navigate(`/interview/report/${interview.interview_id}`);
     } catch (error) {
       console.error(error);
-      alert("Failed to submit interview. Please try again.");
+      alert(
+        "Failed to submit interview. Please try again."
+      );
     } finally {
       setEvaluating(false);
     }
   }
 
-  const isLastQuestion = currentQuestion === questions.length - 1;
+  const isLastQuestion =
+    currentQuestion === questions.length - 1;
 
   if (loading) {
     return (
@@ -191,7 +193,8 @@ export default function Interview() {
     return (
       <DashboardLayout>
         <div className="p-6 text-center text-red-500">
-          {loadError || "Failed to load interview. Please try again."}
+          {loadError ||
+            "Failed to load interview. Please try again."}
         </div>
       </DashboardLayout>
     );
@@ -199,7 +202,7 @@ export default function Interview() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-3xl mx-auto p-6 space-y-6">
+      <div className="mx-auto max-w-3xl space-y-6 p-6">
         <ProgressBar
           current={currentQuestion + 1}
           total={questions.length}
@@ -261,7 +264,7 @@ export default function Interview() {
             <button
               onClick={handleNext}
               disabled={evaluating}
-              className="px-4 py-2 rounded-lg bg-blue-600 text-white disabled:opacity-50"
+              className="rounded-lg bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {evaluating
                 ? "Evaluating..."
@@ -273,7 +276,7 @@ export default function Interview() {
             <button
               onClick={handleSubmit}
               disabled={evaluating}
-              className="px-4 py-2 rounded-lg bg-green-600 text-white disabled:opacity-50"
+              className="rounded-lg bg-green-600 px-4 py-2 text-white transition hover:bg-green-500 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {evaluating
                 ? "Submitting..."

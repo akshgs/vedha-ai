@@ -11,22 +11,26 @@ export default function EvaluationCard({
 }: Props) {
   return (
     <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
-      <h2
-        className={`mb-5 text-2xl font-bold ${color}`}
-      >
+      <h2 className={`mb-5 text-2xl font-bold ${color}`}>
         {title}
       </h2>
 
-      <ul className="space-y-3">
-        {items.map((item, index) => (
-          <li
-            key={index}
-            className="rounded-lg bg-slate-800 p-3 text-slate-200"
-          >
-            • {item}
-          </li>
-        ))}
-      </ul>
+      {items.length > 0 ? (
+        <ul className="space-y-3">
+          {items.map((item, index) => (
+            <li
+              key={index}
+              className="rounded-lg bg-slate-800 p-3 text-slate-200"
+            >
+              • {item}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-slate-400">
+          No data available.
+        </p>
+      )}
     </div>
   );
 }

@@ -15,6 +15,13 @@ from app.models.education import Education
 from app.models.experience import Experience
 from app.models.project import Project
 from app.models.certification import Certification
+from app.models.skill import Skill
+
+# Company Models
+from app.models.company_profile import CompanyProfile
+from app.models.company_job import CompanyJob
+from app.models.application import Application
+
 
 def init_db() -> None:
     Base.metadata.create_all(bind=engine)

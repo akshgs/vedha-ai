@@ -74,3 +74,34 @@ class User(Base):
         back_populates="user",
         cascade="all, delete-orphan",
     )
+
+    projects = relationship(
+        "Project",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+
+    certifications = relationship(
+        "Certification",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+
+    skills = relationship(
+        "Skill",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+
+    company_profile = relationship(
+        "CompanyProfile",
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
+
+    applications = relationship(
+        "Application",
+        back_populates="student",
+        cascade="all, delete-orphan",
+    )

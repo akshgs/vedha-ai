@@ -1,3 +1,5 @@
+from fastapi import HTTPException
+
 from app.repositories.dashboard_repository import DashboardRepository
 from app.repositories.job_repository import JobRepository
 from app.repositories.roadmap_repository import RoadmapRepository
@@ -25,8 +27,9 @@ class DashboardService:
         )
 
         if student is None:
-            raise ValueError(
-                "Student not found."
+            raise HTTPException(
+                status_code=404,
+                detail="Student not found.",
             )
 
         resume = (
@@ -55,12 +58,14 @@ class DashboardService:
             self.dashboard_repository.get_average_interview_score(
                 student_id
             )
+            or 0
         )
 
         best_score = (
             self.dashboard_repository.get_best_interview_score(
                 student_id
             )
+            or 0
         )
 
         recent_interviews = (
@@ -75,30 +80,20 @@ class DashboardService:
             )
         )
 
-        roadmap_progress = 0.0
-
-        if (
-            roadmap is not None
-            and roadmap.progress is not None
-        ):
-            roadmap_progress = float(
-                roadmap.progress
-            )
-
-        resume_score = 0.0
-
-        if resume is not None:
-            resume_score = float(
-                resume.match_percent
-            )
-
-        average_score = float(
-            average_score or 0
+        roadmap_progress = (
+            float(roadmap.progress)
+            if roadmap and roadmap.progress is not None
+            else 0.0
         )
 
-        best_score = float(
-            best_score or 0
+        resume_score = (
+            float(resume.match_percent)
+            if resume is not None
+            else 0.0
         )
+
+        average_score = float(average_score)
+        best_score = float(best_score)
 
         career_readiness = round(
             (
@@ -111,7 +106,7 @@ class DashboardService:
 
         return {
             "student_name": student.name,
-            "resume_score": resume_score,
+            "resume_score": round(resume_score, 2),
             "total_jobs": total_jobs,
             "total_interviews": total_interviews,
             "completed_interviews": completed_interviews,
@@ -123,7 +118,10 @@ class DashboardService:
                 best_score,
                 2,
             ),
-            "roadmap_progress": roadmap_progress,
+            "roadmap_progress": round(
+                roadmap_progress,
+                2,
+            ),
             "career_readiness": career_readiness,
             "recent_interviews": [
                 {
