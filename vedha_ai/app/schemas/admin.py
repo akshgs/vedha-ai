@@ -47,5 +47,38 @@ class AdminUserStatusUpdate(BaseModel):
     status: str
 
 
+# ==========================================
+# Company Management
+# ==========================================
+
+class AdminCompanyResponse(BaseModel):
+    id: int
+    user_id: int
+    company_name: str
+    industry: str
+    website: str
+    location: str
+    verification_status: str
+    is_verified: bool
+    approved_at: datetime | None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class AdminCompaniesResponse(BaseModel):
+    total: int
+    page: int
+    limit: int
+    companies: list[AdminCompanyResponse]
+
+
+class CompanyRejectionRequest(BaseModel):
+    reason: str
+
+
+# ==========================================
+# Common Response
+# ==========================================
+
 class AdminMessageResponse(BaseModel):
     message: str

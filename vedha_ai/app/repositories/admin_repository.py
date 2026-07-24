@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
@@ -151,3 +153,120 @@ class AdminRepository:
         self.db.refresh(user)
 
         return user
+
+    def delete_user(
+        self,
+        user_id: int,
+    ) -> bool:
+        user = (
+            self.db.query(User)
+            .filter(User.id == user_id)
+            .first()
+        )
+
+        if user is None:
+            return False
+
+        self.db.delete(user)
+        self.db.commit()
+
+        return True
+
+    # =========================
+    # Company Management
+    # =========================
+
+    def get_companies(
+        self,
+        page: int = 1,
+        limit: int = 10,
+        search: str | None = None,
+        status: str | None = None,
+    ):
+        query = self.db.query(CompanyProfile)
+
+        if search:
+            query = query.filter(
+                CompanyProfile.company_name.ilike(f"%{search}%")
+            )
+
+        if status:
+            query = query.filter(
+                CompanyProfile.verification_status == status
+            )
+
+        total = query.count()
+
+        companies = (
+            query.order_by(CompanyProfile.created_at.desc())
+            .offset((page - 1) * limit)
+            .limit(limit)
+            .all()
+        )
+
+        return {
+            "total": total,
+            "page": page,
+            "limit": limit,
+            "companies": companies,
+        }
+
+    def get_pending_companies(self):
+        return (
+            self.db.query(CompanyProfile)
+            .filter(
+                CompanyProfile.verification_status == "pending"
+            )
+            .order_by(CompanyProfile.created_at.desc())
+            .all()
+        )
+
+    def approve_company(
+        self,
+        company_id: int,
+        admin_id: int,
+    ):
+        company = (
+            self.db.query(CompanyProfile)
+            .filter(CompanyProfile.id == company_id)
+            .first()
+        )
+
+        if company is None:
+            return None
+
+        company.is_verified = True
+        company.verification_status = "approved"
+        company.approved_at = datetime.utcnow()
+        company.approved_by = admin_id
+        company.rejection_reason = None
+
+        self.db.commit()
+        self.db.refresh(company)
+
+        return company
+
+    def reject_company(
+        self,
+        company_id: int,
+        reason: str,
+    ):
+        company = (
+            self.db.query(CompanyProfile)
+            .filter(CompanyProfile.id == company_id)
+            .first()
+        )
+
+        if company is None:
+            return None
+
+        company.is_verified = False
+        company.verification_status = "rejected"
+        company.rejection_reason = reason
+        company.approved_at = None
+        company.approved_by = None
+
+        self.db.commit()
+        self.db.refresh(company)
+
+        return company

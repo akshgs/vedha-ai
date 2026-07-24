@@ -63,6 +63,10 @@ class User(Base):
         nullable=True,
     )
 
+    # =========================
+    # Student Relationships
+    # =========================
+
     educations = relationship(
         "Education",
         back_populates="user",
@@ -93,15 +97,20 @@ class User(Base):
         cascade="all, delete-orphan",
     )
 
+    applications = relationship(
+        "Application",
+        back_populates="student",
+        cascade="all, delete-orphan",
+    )
+
+    # =========================
+    # Company Relationship
+    # =========================
+
     company_profile = relationship(
         "CompanyProfile",
         back_populates="user",
         uselist=False,
         cascade="all, delete-orphan",
-    )
-
-    applications = relationship(
-        "Application",
-        back_populates="student",
-        cascade="all, delete-orphan",
+        foreign_keys="CompanyProfile.user_id",
     )

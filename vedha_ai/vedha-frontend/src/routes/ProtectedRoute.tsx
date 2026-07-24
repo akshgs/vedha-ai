@@ -1,20 +1,24 @@
 import { Navigate } from "react-router-dom";
 import useAuth from "@/hooks/useAuth";
 
+type UserRole = "student" | "company" | "admin";
+
 type Props = {
   children: React.ReactNode;
+  role?: UserRole;
 };
 
-export default function ProtectedRoute({ children }: Props) {
-  const { loading, isAuthenticated, user } = useAuth();
+export default function ProtectedRoute({
+  children,
+  role,
+}: Props) {
+  const {
+    loading,
+    isAuthenticated,
+    user,
+  } = useAuth();
 
-  console.log("========== ProtectedRoute ==========");
-  console.log("loading =", loading);
-  console.log("isAuthenticated =", isAuthenticated);
-  console.log("user =", user);
-  console.log("token =", localStorage.getItem("access_token"));
-  console.log("====================================");
-
+  // Loading State
   if (loading) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-slate-950 text-white">
@@ -23,12 +27,42 @@ export default function ProtectedRoute({ children }: Props) {
     );
   }
 
-  if (!isAuthenticated) {
-    console.log("Redirecting to /login");
+  // Not Logged In
+  if (!isAuthenticated || !user) {
     return <Navigate to="/login" replace />;
   }
 
-  console.log("Access Granted");
+  // Role Authorization
+  if (role && user.role !== role) {
+    switch (user.role) {
+      case "student":
+        return (
+          <Navigate
+            to="/student/dashboard"
+            replace
+          />
+        );
+
+      case "company":
+        return (
+          <Navigate
+            to="/company/dashboard"
+            replace
+          />
+        );
+
+      case "admin":
+        return (
+          <Navigate
+            to="/admin/dashboard"
+            replace
+          />
+        );
+
+      default:
+        return <Navigate to="/login" replace />;
+    }
+  }
 
   return <>{children}</>;
 }

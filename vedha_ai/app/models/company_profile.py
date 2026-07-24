@@ -1,6 +1,13 @@
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.base import Base
@@ -61,6 +68,41 @@ class CompanyProfile(Base):
         nullable=True,
     )
 
+    # =========================
+    # Company Verification
+    # =========================
+
+    is_verified: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False,
+    )
+
+    verification_status: Mapped[str] = mapped_column(
+        String(20),
+        default="pending",
+        nullable=False,
+    )
+
+    approved_at: Mapped[datetime | None] = mapped_column(
+        DateTime,
+        nullable=True,
+    )
+
+    approved_by: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id"),
+        nullable=True,
+    )
+
+    rejection_reason: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+    )
+
+    # =========================
+    # Timestamps
+    # =========================
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         default=datetime.utcnow,
@@ -72,13 +114,16 @@ class CompanyProfile(Base):
         onupdate=datetime.utcnow,
     )
 
-    # Relationship with User
+    # =========================
+    # Relationships
+    # =========================
+
     user = relationship(
         "User",
         back_populates="company_profile",
+        foreign_keys=[user_id],
     )
 
-    # Relationship with Company Jobs
     jobs = relationship(
         "CompanyJob",
         back_populates="company",

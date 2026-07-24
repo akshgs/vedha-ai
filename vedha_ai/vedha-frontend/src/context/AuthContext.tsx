@@ -18,17 +18,37 @@ type AuthContextType = {
   user: User | null;
   loading: boolean;
   isAuthenticated: boolean;
+
+  isStudent: boolean;
+  isCompany: boolean;
+  isAdmin: boolean;
+
   login: (data: LoginRequest) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
 };
 
-const AuthContext = createContext<AuthContextType | undefined>(
-  undefined
-);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 type Props = {
   children: ReactNode;
+};
+
+const saveUserToStorage = (user: User) => {
+  localStorage.setItem("user_id", String(user.id));
+  localStorage.setItem("student_id", String(user.id)); // Backward compatibility
+  localStorage.setItem("user_name", user.name);
+  localStorage.setItem("user_email", user.email);
+  localStorage.setItem("user_role", user.role);
+};
+
+const clearUserStorage = () => {
+  localStorage.removeItem("access_token");
+  localStorage.removeItem("user_id");
+  localStorage.removeItem("student_id");
+  localStorage.removeItem("user_name");
+  localStorage.removeItem("user_email");
+  localStorage.removeItem("user_role");
 };
 
 export function AuthProvider({ children }: Props) {
@@ -39,14 +59,10 @@ export function AuthProvider({ children }: Props) {
     try {
       const currentUser = await getCurrentUser();
 
-      localStorage.setItem("student_id", String(currentUser.id));
-      localStorage.setItem("user_id", String(currentUser.id));
-      localStorage.setItem("user_name", currentUser.name);
-      localStorage.setItem("user_email", currentUser.email);
-      localStorage.setItem("user_role", currentUser.role);
-
+      saveUserToStorage(currentUser);
       setUser(currentUser);
     } catch {
+      clearUserStorage();
       setUser(null);
     }
   };
@@ -54,33 +70,18 @@ export function AuthProvider({ children }: Props) {
   const login = async (data: LoginRequest) => {
     const response = await loginService(data);
 
-    localStorage.setItem(
-      "access_token",
-      response.access_token
-    );
+    localStorage.setItem("access_token", response.access_token);
 
-    const currentUser = await getCurrentUser();
-
-    localStorage.setItem("student_id", String(currentUser.id));
-    localStorage.setItem("user_id", String(currentUser.id));
-    localStorage.setItem("user_name", currentUser.name);
-    localStorage.setItem("user_email", currentUser.email);
-    localStorage.setItem("user_role", currentUser.role);
-
-    setUser(currentUser);
+    await refreshUser();
   };
 
   const logout = () => {
-    logoutService();
-
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("student_id");
-    localStorage.removeItem("user_id");
-    localStorage.removeItem("user_name");
-    localStorage.removeItem("user_email");
-    localStorage.removeItem("user_role");
-
-    setUser(null);
+    try {
+      logoutService();
+    } finally {
+      clearUserStorage();
+      setUser(null);
+    }
   };
 
   useEffect(() => {
@@ -93,24 +94,7 @@ export function AuthProvider({ children }: Props) {
       }
 
       try {
-        const currentUser = await getCurrentUser();
-
-        localStorage.setItem("student_id", String(currentUser.id));
-        localStorage.setItem("user_id", String(currentUser.id));
-        localStorage.setItem("user_name", currentUser.name);
-        localStorage.setItem("user_email", currentUser.email);
-        localStorage.setItem("user_role", currentUser.role);
-
-        setUser(currentUser);
-      } catch {
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("student_id");
-        localStorage.removeItem("user_id");
-        localStorage.removeItem("user_name");
-        localStorage.removeItem("user_email");
-        localStorage.removeItem("user_role");
-
-        setUser(null);
+        await refreshUser();
       } finally {
         setLoading(false);
       }
@@ -119,17 +103,23 @@ export function AuthProvider({ children }: Props) {
     initialize();
   }, []);
 
+  const value: AuthContextType = {
+    user,
+    loading,
+
+    isAuthenticated: !!user,
+
+    isStudent: user?.role === "student",
+    isCompany: user?.role === "company",
+    isAdmin: user?.role === "admin",
+
+    login,
+    logout,
+    refreshUser,
+  };
+
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        loading,
-        isAuthenticated: user !== null,
-        login,
-        logout,
-        refreshUser,
-      }}
-    >
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

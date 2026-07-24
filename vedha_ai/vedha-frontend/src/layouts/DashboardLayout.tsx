@@ -1,28 +1,24 @@
 import type { ReactNode } from "react";
-
-import Sidebar from "@/components/dashboard/Sidebar";
-import Topbar from "@/components/dashboard/Topbar";
+import useAuth from "@/hooks/useAuth";
+import StudentLayout from "./StudentLayout";
+import CompanyLayout from "./CompanyLayout";
+import AdminLayout from "./AdminLayout";
 
 type DashboardLayoutProps = {
   children: ReactNode;
 };
 
-export default function DashboardLayout({
-  children,
-}: DashboardLayoutProps) {
-  return (
-    <div className="flex h-screen w-screen overflow-hidden bg-slate-950 text-white">
-      {/* Sidebar */}
-      <Sidebar />
+export default function DashboardLayout({ children }: DashboardLayoutProps) {
+  const { user } = useAuth();
 
-      {/* Main */}
-      <div className="flex min-w-0 flex-1 flex-col">
-        <Topbar />
+  if (user?.role === "admin") {
+    return <AdminLayout>{children}</AdminLayout>;
+  }
 
-        <main className="flex-1 overflow-y-auto p-8">
-          {children}
-        </main>
-      </div>
-    </div>
-  );
+  if (user?.role === "company") {
+    return <CompanyLayout>{children}</CompanyLayout>;
+  }
+
+  // Fallback to Student Layout
+  return <StudentLayout>{children}</StudentLayout>;
 }

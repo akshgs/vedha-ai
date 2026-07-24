@@ -3,7 +3,19 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 from app.nlp.skill_extractor import ROLE_SKILLS
 
-embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
+# Lazy loaded model
+_embedding_model = None
+
+
+def get_embedding_model():
+    global _embedding_model
+
+    if _embedding_model is None:
+        _embedding_model = SentenceTransformer(
+            "all-MiniLM-L6-v2"
+        )
+
+    return _embedding_model
 
 
 SKILL_ALIASES = {
@@ -37,6 +49,8 @@ def calculate_role_match(
             "matched_skills": [],
             "missing_skills": required_skills,
         }
+
+    embedding_model = get_embedding_model()
 
     resume_embedding = embedding_model.encode(
         [" ".join(resume_skills)]
@@ -79,8 +93,8 @@ def calculate_role_match(
             missing.append(skill)
 
     skill_score = (
-        len(matched) /
-        len(required_skills)
+        len(matched)
+        / len(required_skills)
     ) * 100
 
     match_percent = round(

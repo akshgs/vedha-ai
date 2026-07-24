@@ -2,6 +2,7 @@ from fastapi import HTTPException
 
 from app.repositories.admin_repository import AdminRepository
 from app.schemas.admin import (
+    AdminCompaniesResponse,
     AdminDashboardResponse,
     AdminMessageResponse,
     AdminUsersResponse,
@@ -76,4 +77,103 @@ class AdminService:
 
         return AdminMessageResponse(
             message="User status updated successfully."
+        )
+
+    def delete_user(
+        self,
+        current_user_id: int,
+        user_id: int,
+    ) -> AdminMessageResponse:
+        if current_user_id == user_id:
+            raise HTTPException(
+                status_code=400,
+                detail="You cannot delete your own account.",
+            )
+
+        deleted = self.admin_repository.delete_user(user_id)
+
+        if not deleted:
+            raise HTTPException(
+                status_code=404,
+                detail="User not found.",
+            )
+
+        return AdminMessageResponse(
+            message="User deleted successfully."
+        )
+
+    # =========================
+    # Company Management
+    # =========================
+
+    def get_companies(
+        self,
+        page: int = 1,
+        limit: int = 10,
+        search: str | None = None,
+        status: str | None = None,
+    ) -> AdminCompaniesResponse:
+        data = self.admin_repository.get_companies(
+            page=page,
+            limit=limit,
+            search=search,
+            status=status,
+        )
+
+        return AdminCompaniesResponse(**data)
+
+    def get_pending_companies(self) -> AdminCompaniesResponse:
+        companies = self.admin_repository.get_pending_companies()
+
+        return AdminCompaniesResponse(
+            total=len(companies),
+            page=1,
+            limit=len(companies),
+            companies=companies,
+        )
+
+    def approve_company(
+        self,
+        company_id: int,
+        admin_id: int,
+    ) -> AdminMessageResponse:
+        company = self.admin_repository.approve_company(
+            company_id=company_id,
+            admin_id=admin_id,
+        )
+
+        if company is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Company not found.",
+            )
+
+        return AdminMessageResponse(
+            message="Company approved successfully."
+        )
+
+    def reject_company(
+        self,
+        company_id: int,
+        reason: str,
+    ) -> AdminMessageResponse:
+        if not reason.strip():
+            raise HTTPException(
+                status_code=400,
+                detail="Rejection reason is required.",
+            )
+
+        company = self.admin_repository.reject_company(
+            company_id=company_id,
+            reason=reason.strip(),
+        )
+
+        if company is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Company not found.",
+            )
+
+        return AdminMessageResponse(
+            message="Company rejected successfully."
         )
