@@ -7,16 +7,32 @@ from app.ai.prompts import INTERVIEW_EVALUATION_PROMPT
 from app.ai.rag_engine import retrieve_context
 
 
-llm = get_llm(
-    model="llama-3.3-70b-versatile",
-    temperature=0.2,
-)
+_str_parser = StrOutputParser()
 
-evaluation_chain = (
-    INTERVIEW_EVALUATION_PROMPT
-    | llm
-    | StrOutputParser()
-)
+
+class LazyChain:
+    def __init__(self, prompt, temperature, model="llama-3.3-70b-versatile"):
+        self.prompt = prompt
+        self.temperature = temperature
+        self.model = model
+        self._chain = None
+
+    @property
+    def chain(self):
+        if self._chain is None:
+            llm = get_llm(model=self.model, temperature=self.temperature)
+            self._chain = self.prompt | llm | _str_parser
+        return self._chain
+
+    def invoke(self, *args, **kwargs):
+        return self.chain.invoke(*args, **kwargs)
+
+    async def ainvoke(self, *args, **kwargs):
+        return await self.chain.ainvoke(*args, **kwargs)
+
+
+evaluation_chain = LazyChain(INTERVIEW_EVALUATION_PROMPT, 0.2)
+
 
 
 def _validate_evaluation(data: dict) -> dict:

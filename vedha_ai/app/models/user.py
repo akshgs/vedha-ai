@@ -47,6 +47,11 @@ class User(Base):
         default=False,
     )
 
+    onboarding_complete: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         default=datetime.utcnow,
@@ -114,3 +119,13 @@ class User(Base):
         cascade="all, delete-orphan",
         foreign_keys="CompanyProfile.user_id",
     )
+
+
+# Prevent circular dependency/unregistered class issues in SQLAlchemy
+from app.models.education import Education
+from app.models.experience import Experience
+from app.models.project import Project
+from app.models.certification import Certification
+from app.models.skill import Skill
+from app.models.application import Application
+from app.models.company_profile import CompanyProfile

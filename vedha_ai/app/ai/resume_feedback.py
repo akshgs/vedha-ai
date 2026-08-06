@@ -5,17 +5,19 @@ from app.ai.prompts import RESUME_FEEDBACK_PROMPT
 from app.ai.rag_engine import retrieve_context
 
 
-llm = get_llm(
-    model="llama-3.1-8b-instant",
-    temperature=0.3,
-)
+_llm = None
+_str_parser = StrOutputParser()
 
 
-feedback_chain = (
-    RESUME_FEEDBACK_PROMPT
-    | llm
-    | StrOutputParser()
-)
+def _get_feedback_chain():
+    global _llm
+    if _llm is None:
+        _llm = get_llm(
+            model="llama-3.1-8b-instant",
+            temperature=0.3,
+        )
+    return RESUME_FEEDBACK_PROMPT | _llm | _str_parser
+
 
 
 async def generate_feedback(
@@ -35,7 +37,7 @@ async def generate_feedback(
 
         context = retrieve_context(query)
 
-        return await feedback_chain.ainvoke(
+        return await _get_feedback_chain().ainvoke(
             {
                 "role": role,
                 "matched_skills": ", ".join(

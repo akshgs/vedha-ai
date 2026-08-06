@@ -14,6 +14,9 @@ class SkillService:
         skill: SkillCreate,
         user_id: int,
     ):
+        existing = self.repository.get_by_name(user_id, skill.skill_name)
+        if existing:
+            raise ValueError("Skill already exists.")
         return self.repository.create(
             skill,
             user_id,
@@ -38,6 +41,11 @@ class SkillService:
 
         if not db_skill:
             raise ValueError("Skill not found")
+
+        if skill.skill_name is not None:
+            existing = self.repository.get_by_name(user_id, skill.skill_name)
+            if existing and existing.id != skill_id:
+                raise ValueError("Skill already exists.")
 
         return self.repository.update(
             db_skill,

@@ -19,7 +19,12 @@ with open(
 def get_roadmap_template(
     target_role: str,
 ):
-    return ROADMAP_DB.get(
-        target_role,
-        None,
-    )
+    if not target_role:
+        return ROADMAP_DB["Full Stack Developer"]
+    
+    target_role_lower = target_role.lower()
+    for role_name in ROADMAP_DB:
+        if role_name.lower() in target_role_lower or target_role_lower in role_name.lower():
+            return ROADMAP_DB[role_name]
+            
+    return ROADMAP_DB["Full Stack Developer"]

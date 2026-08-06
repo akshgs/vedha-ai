@@ -1,3 +1,4 @@
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.models.skill import Skill
@@ -7,6 +8,20 @@ from app.schemas.skill_schema import SkillCreate, SkillUpdate
 class SkillRepository:
     def __init__(self, db: Session):
         self.db = db
+
+    def get_by_name(
+        self,
+        user_id: int,
+        skill_name: str,
+    ) -> Skill | None:
+        return (
+            self.db.query(Skill)
+            .filter(
+                Skill.user_id == user_id,
+                func.lower(Skill.skill_name) == func.lower(skill_name),
+            )
+            .first()
+        )
 
     def create(
         self,

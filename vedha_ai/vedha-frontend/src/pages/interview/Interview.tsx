@@ -8,6 +8,8 @@ import AnswerEditor from "@/components/interview/AnswerEditor";
 import ProgressBar from "@/components/interview/ProgressBar";
 import ScoreCard from "@/components/interview/ScoreCard";
 import EvaluationCard from "@/components/interview/EvaluationCard";
+import Button from "@/components/ui/button/Button";
+import PageHeader from "@/components/ui/layout/PageHeader";
 
 import {
   generateInterview,
@@ -165,7 +167,7 @@ export default function Interview() {
         interview_id: interview.interview_id,
       });
 
-      navigate(`/interview/report/${interview.interview_id}`);
+      navigate(`/student/interview/report/${interview.interview_id}`);
     } catch (error) {
       console.error(error);
       alert(
@@ -182,7 +184,7 @@ export default function Interview() {
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="p-6 text-center text-gray-500">
+        <div className="ve-card p-12 text-center text-slate-400 font-medium">
           Loading interview...
         </div>
       </DashboardLayout>
@@ -192,7 +194,7 @@ export default function Interview() {
   if (loadError || !interview || questions.length === 0) {
     return (
       <DashboardLayout>
-        <div className="p-6 text-center text-red-500">
+        <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-5 text-red-400 text-xs">
           {loadError ||
             "Failed to load interview. Please try again."}
         </div>
@@ -202,7 +204,12 @@ export default function Interview() {
 
   return (
     <DashboardLayout>
-      <div className="mx-auto max-w-3xl space-y-6 p-6">
+      <div className="space-y-8">
+        <PageHeader
+          title="AI Mock Interview Arena"
+          subtitle={`Target Role: ${targetRole} • Real-time AI evaluation and feedback.`}
+        />
+
         <ProgressBar
           current={currentQuestion + 1}
           total={questions.length}
@@ -259,31 +266,32 @@ export default function Interview() {
           </>
         )}
 
-        <div className="flex justify-end gap-3">
+        <div className="flex justify-end gap-3 pt-2">
           {!isLastQuestion ? (
-            <button
+            <Button
               onClick={handleNext}
               disabled={evaluating}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+              variant="primary"
             >
               {evaluating
                 ? "Evaluating..."
                 : awaitingAdvance
                 ? "Next Question"
                 : "Evaluate Answer"}
-            </button>
+            </Button>
           ) : (
-            <button
+            <Button
               onClick={handleSubmit}
               disabled={evaluating}
-              className="rounded-lg bg-green-600 px-4 py-2 text-white transition hover:bg-green-500 disabled:cursor-not-allowed disabled:opacity-50"
+              variant="primary"
+              className="bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/20"
             >
               {evaluating
                 ? "Submitting..."
                 : awaitingAdvance
                 ? "Finish & View Report"
                 : "Evaluate Answer"}
-            </button>
+            </Button>
           )}
         </div>
       </div>

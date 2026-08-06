@@ -4,6 +4,8 @@ import DashboardLayout from "@/layouts/DashboardLayout";
 import { getCompanies, approveCompany, rejectCompany } from "@/services/admin";
 import { toast } from "sonner";
 
+import PageHeader from "@/components/ui/layout/PageHeader";
+
 export default function Companies() {
   const [companies, setCompanies] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,12 +69,10 @@ export default function Companies() {
   return (
     <DashboardLayout>
       <div className="mx-auto max-w-7xl space-y-8 font-sans">
-        <div>
-          <h1 className="text-3xl font-bold">Companies Management</h1>
-          <p className="mt-2 text-slate-400">
-            Audit registered enterprise recruiters, verify company legitimacy, and clear inactive entries.
-          </p>
-        </div>
+        <PageHeader
+          title="Companies Management"
+          subtitle="Audit registered enterprise recruiters, verify company legitimacy, and clear inactive entries."
+        />
 
         {/* Filter Row */}
         <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-4 shadow-sm flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -148,36 +148,36 @@ export default function Companies() {
                         <td className="p-4">
                           <span
                             className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-                              c.status === "active"
+                              c.verification_status === "approved"
                                 ? "bg-emerald-500/10 text-emerald-400"
-                                : c.status === "rejected"
+                                : c.verification_status === "rejected"
                                 ? "bg-red-500/10 text-red-400"
                                 : "bg-amber-500/10 text-amber-400"
                             }`}
                           >
-                            {c.status}
+                            {c.verification_status}
                           </span>
                         </td>
                         <td className="p-4 text-right space-x-2">
-                          {c.status === "pending" && (
+                          {c.verification_status === "pending" && (
                             <>
                               <button
                                 onClick={() => handleApprove(c.id)}
-                                className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-500 transition"
+                                className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-500 transition animate-fade-in"
                               >
                                 <CheckCircle2 size={12} />
                                 Approve
                               </button>
                               <button
                                 onClick={() => handleReject(c.id)}
-                                className="inline-flex items-center gap-1 rounded-lg border border-red-500/20 px-2.5 py-1.5 text-xs font-semibold text-red-400 hover:bg-red-500/10 transition"
+                                className="inline-flex items-center gap-1 rounded-lg border border-red-500/20 px-2.5 py-1.5 text-xs font-semibold text-red-400 hover:bg-red-500/10 transition animate-fade-in"
                               >
                                 <XCircle size={12} />
                                 Reject
                               </button>
                             </>
                           )}
-                          {c.status !== "pending" && (
+                          {c.verification_status !== "pending" && (
                             <span className="text-xs text-slate-500 italic pr-3">Verified / Settled</span>
                           )}
                         </td>

@@ -118,3 +118,11 @@ class Profile(Base):
     )
 
     user = relationship("User")
+
+    @property
+    def dream_company(self) -> str | None:
+        return self.company
+
+    @dream_company.setter
+    def dream_company(self, value: str | None):
+        self.company = value

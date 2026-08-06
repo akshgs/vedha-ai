@@ -85,7 +85,7 @@ export default function InterviewHistory() {
                     </div>
 
                     <Link
-                      to={`/interview/report/${item.interview_id}`}
+                      to={`/student/interview/report/${item.interview_id}`}
                       className="mt-4 inline-block rounded-xl bg-cyan-600 px-5 py-3 font-semibold text-white transition hover:bg-cyan-500"
                     >
                       View Report

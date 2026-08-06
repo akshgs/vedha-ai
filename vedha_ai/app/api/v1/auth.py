@@ -3,14 +3,14 @@ from sqlalchemy.orm import Session
 
 from app.database.database import get_db
 from app.repositories.user_repository import UserRepository
-from app.schemas.auth import LoginRequest, RegisterRequest
+from app.schemas.auth import LoginRequest, RegisterRequest, AuthResponse, UserResponse
 from app.security.jwt import get_current_user
 from app.services.auth_service import AuthService
 
 router = APIRouter()
 
 
-@router.post("/register")
+@router.post("/register", status_code=201, response_model=AuthResponse)
 def register(
     data: RegisterRequest,
     db: Session = Depends(get_db),
@@ -28,7 +28,7 @@ def register(
         )
 
 
-@router.post("/login")
+@router.post("/login", response_model=AuthResponse)
 def login(
     data: LoginRequest,
     db: Session = Depends(get_db),
@@ -49,14 +49,8 @@ def login(
         )
 
 
-@router.get("/me")
+@router.get("/me", response_model=UserResponse)
 def get_me(
     current_user=Depends(get_current_user),
 ):
-    return {
-        "id": current_user.id,
-        "name": current_user.name,
-        "email": current_user.email,
-        "role": current_user.role,
-        "status": current_user.status,
-    }
+    return current_user

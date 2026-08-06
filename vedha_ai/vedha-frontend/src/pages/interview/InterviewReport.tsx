@@ -218,7 +218,7 @@ export default function InterviewReport() {
 
         <div className="flex justify-end">
           <Link
-            to="/interview/history"
+            to="/student/interview/history"
             className="rounded-lg bg-cyan-600 px-6 py-3 text-white transition hover:bg-cyan-700"
           >
             View Interview History

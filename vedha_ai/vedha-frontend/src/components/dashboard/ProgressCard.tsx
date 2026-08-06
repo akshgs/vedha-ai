@@ -1,40 +1,62 @@
 type Props = {
-  title: string;
-  value: number;
-  color: string;
+  label: string;
+  value: number;   // 0–100
+  color?: "blue" | "green" | "orange" | "red";
+  showPercent?: boolean;
+  size?: "sm" | "md";
+};
+
+const COLORS = {
+  blue:   "#3B82F6",
+  green:  "#22C55E",
+  orange: "#F59E0B",
+  red:    "#EF4444",
 };
 
 export default function ProgressCard({
-  title,
+  label,
   value,
-  color,
+  color = "blue",
+  showPercent = true,
+  size = "md",
 }: Props) {
+  const clampedValue = Math.max(0, Math.min(100, value));
+  const barColor = COLORS[color];
+
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
-
-      <div className="flex items-center justify-between">
-
-        <h3 className="text-lg font-semibold text-white">
-          {title}
-        </h3>
-
-        <span className="text-2xl font-bold text-white">
-          {value}%
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        gap: 8,
+      }}>
+        <span style={{
+          fontSize: size === "sm" ? 14 : 16, // Body is 16px, Secondary is 14px
+          fontWeight: 500, color: '#F1F5F9', flexGrow: 1
+        }}>
+          {label}
         </span>
-
+        {showPercent && (
+          <span style={{
+            fontSize: size === "sm" ? 12 : 14,
+            fontWeight: 600, color: barColor,
+          }}>
+            {clampedValue}%
+          </span>
+        )}
       </div>
 
-      <div className="mt-6 h-3 overflow-hidden rounded-full bg-slate-800">
-
-        <div
-          className={`h-full rounded-full transition-all duration-700 ${color}`}
-          style={{
-            width: `${Math.min(Math.max(value, 0), 100)}%`,
-          }}
-        />
-
+      <div style={{
+        width: '100%', height: size === "sm" ? 6 : 8,
+        background: '#1F2937', borderRadius: 100, overflow: 'hidden',
+      }}>
+        <div style={{
+          width: `${clampedValue}%`,
+          height: '100%',
+          background: barColor,
+          borderRadius: 100,
+          transition: 'width 0.7s cubic-bezier(0.4, 0, 0.2, 1)',
+        }} />
       </div>
-
     </div>
   );
 }

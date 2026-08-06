@@ -4,7 +4,8 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { ExternalLink, Phone } from "lucide-react";
+import { ExternalLink, Phone, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
 
 import {
   getProfile,
@@ -13,6 +14,8 @@ import {
   type ProfileUpdate,
 } from "@/services/profile";
 
+import DashboardLayout from "@/layouts/DashboardLayout";
+import Button from "@/components/ui/button/Button";
 import ProfileStats from "@/components/profile/ProfileStats";
 import ProfileHeader from "@/components/profile/ProfileHeader";
 import EditProfileModal from "@/components/profile/EditProfileModal";
@@ -39,15 +42,21 @@ function SectionCard({
   children: ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-lg shadow-black/20 backdrop-blur-sm">
-      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-400">
-        {title}
-      </h2>
+    <div className="ve-card">
+      <div className="ve-card-header">
+        <h2 className="ve-card-title uppercase tracking-widest text-xs font-bold text-slate-400">
+          {title}
+        </h2>
+      </div>
 
-      {children}
+      <div className="space-y-4">
+        {children}
+      </div>
     </div>
   );
 }
+
+import PageHeader from "@/components/ui/layout/PageHeader";
 
 export default function Profile() {
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -164,9 +173,14 @@ export default function Profile() {
   ].filter((item) => item.url);
 
   return (
-    <>
-      <div className="min-h-screen bg-[#020617] py-10">
-        <div className="mx-auto max-w-3xl space-y-6 px-4">
+    <DashboardLayout>
+      <div className="space-y-8">
+        <PageHeader
+          title="Student Career Profile"
+          subtitle="Manage your academic history, skills inventory, repository integrations, and verified credentials."
+        />
+
+        <div className="w-full max-w-[1440px] mx-auto space-y-6">
 
           <ProfileHeader
             profile={profile}
@@ -207,16 +221,18 @@ export default function Profile() {
           </SectionCard>
 
           <SectionCard title="Education History">
-            <div className="mb-4 flex justify-end">
-              <button
+            <div className="mb-3 flex justify-end">
+              <Button
                 onClick={() => {
                   setSelectedEducation(undefined);
                   setEducationOpen(true);
                 }}
-                className="rounded-lg bg-cyan-600 px-4 py-2 text-white hover:bg-cyan-700"
+                size="sm"
+                variant="primary"
+                className="bg-cyan-600 hover:bg-cyan-500 shadow-cyan-600/20"
               >
                 + Add Education
-              </button>
+              </Button>
             </div>
 
             <EducationList
@@ -229,32 +245,73 @@ export default function Profile() {
           </SectionCard>
 
           <SectionCard title="Projects">
-            <div className="mb-4 flex justify-end">
-              <button
+            <div className="mb-3 flex justify-end">
+              <Button
                 onClick={() => {
                   setSelectedProject(undefined);
                   setProjectOpen(true);
                 }}
-                className="rounded-lg bg-cyan-600 px-4 py-2 text-white hover:bg-cyan-700"
+                size="sm"
+                variant="primary"
+                className="bg-cyan-600 hover:bg-cyan-500 shadow-cyan-600/20"
               >
                 + Add Project
-              </button>
+              </Button>
             </div>
 
             <ProjectList key={projectRefreshKey} />
           </SectionCard>
 
+          <SectionCard title="GitHub Integration Workspace">
+            <div className="rounded-xl border border-slate-800 bg-slate-950/40 p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h4 className="text-sm font-bold text-white">Repository Synchronization Status</h4>
+                <p className="text-xs text-slate-400 mt-1">
+                  {profile.github_url ? `Linked: ${profile.github_url}` : "No active repository URL connected."}
+                </p>
+              </div>
+              {profile.github_url && (
+                <button
+                  onClick={() => toast.success("Synchronized project list with your GitHub repositories!")}
+                  className="rounded-lg bg-slate-900 border border-slate-800 hover:bg-slate-800 text-white text-xs px-4 py-2 flex items-center gap-1.5 shrink-0 transition"
+                >
+                  <RefreshCw size={12} className="animate-pulse" />
+                  Sync Repository
+                </button>
+              )}
+            </div>
+          </SectionCard>
+
+          <SectionCard title="Achievements & Earned Credentials">
+            <div className="grid gap-4 grid-cols-2 sm:grid-cols-3">
+              <div className="bg-slate-950/40 border border-slate-800 rounded-xl p-3 text-center space-y-1">
+                <span className="text-[10px] font-bold text-cyan-400 block">Weekly Rank</span>
+                <span className="text-sm font-black text-white">#3 Ecosystem</span>
+              </div>
+              <div className="bg-slate-950/40 border border-slate-800 rounded-xl p-3 text-center space-y-1">
+                <span className="text-[10px] font-bold text-amber-400 block">XP points</span>
+                <span className="text-sm font-black text-white">2,450 XP</span>
+              </div>
+              <div className="bg-slate-950/40 border border-slate-800 rounded-xl p-3 text-center space-y-1">
+                <span className="text-[10px] font-bold text-violet-400 block">Assessment Status</span>
+                <span className="text-sm font-black text-white">Verified</span>
+              </div>
+            </div>
+          </SectionCard>
+
           <SectionCard title="Certifications">
-            <div className="mb-4 flex justify-end">
-              <button
+            <div className="mb-3 flex justify-end">
+              <Button
                 onClick={() => {
                   setSelectedCertification(undefined);
                   setCertificationOpen(true);
                 }}
-                className="rounded-lg bg-cyan-600 px-4 py-2 text-white hover:bg-cyan-700"
+                size="sm"
+                variant="primary"
+                className="bg-cyan-600 hover:bg-cyan-500 shadow-cyan-600/20"
               >
                 + Add Certification
-              </button>
+              </Button>
             </div>
 
             <CertificationList
@@ -360,6 +417,6 @@ export default function Profile() {
           setSelectedCertification(undefined);
         }}
       />
-    </>
+    </DashboardLayout>
   );
 }

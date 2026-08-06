@@ -1,5 +1,20 @@
 # modules/auth.py — Updated for 2026 (PostgreSQL + multi-role)
 import os
+import bcrypt
+
+# Monkeypatch bcrypt to fix passlib's compatibility with bcrypt >= 3.2.2/4.0.0
+if not hasattr(bcrypt, "__about__"):
+    class DummyAbout:
+        __version__ = getattr(bcrypt, "__version__", "3.2.2")
+    bcrypt.__about__ = DummyAbout()
+
+orig_hashpw = bcrypt.hashpw
+def patched_hashpw(password, salt):
+    if len(password) > 72:
+        password = password[:72]
+    return orig_hashpw(password, salt)
+bcrypt.hashpw = patched_hashpw
+
 from datetime import datetime, timedelta
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials

@@ -36,7 +36,7 @@ llm = ChatGroq(
     groq_api_key=os.getenv("GROQ_API_KEY"),
     temperature=0.3
 )
-print("Video Interview models loaded! ✅")
+print("Video Interview models loaded! [OK]")
 
 # ═══════════════════════════════════════════════
 # EYE CONTACT

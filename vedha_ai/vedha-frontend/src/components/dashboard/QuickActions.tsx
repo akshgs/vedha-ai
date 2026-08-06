@@ -8,28 +8,36 @@ import {
 
 const actions = [
   {
-    title: "Upload Resume",
+    title: "Resume Intelligence",
+    description: "Analyze and optimize your ATS score.",
     icon: FileText,
-    path: "/resume",
-    color: "bg-cyan-600",
+    path: "/student/resume",
+    bgColor: "bg-blue-50",
+    iconColor: "text-blue-600",
   },
   {
-    title: "Generate Roadmap",
+    title: "Learning Roadmap",
+    description: "View and progress on your career path.",
     icon: GraduationCap,
-    path: "/roadmap",
-    color: "bg-violet-600",
+    path: "/student/roadmap",
+    bgColor: "bg-purple-50",
+    iconColor: "text-purple-600",
   },
   {
-    title: "Start Interview",
+    title: "Interview Preparation",
+    description: "Practice mock sessions with AI feedback.",
     icon: MessageSquare,
-    path: "/interview",
-    color: "bg-emerald-600",
+    path: "/student/interview",
+    bgColor: "bg-emerald-50",
+    iconColor: "text-emerald-600",
   },
   {
-    title: "Find Jobs",
+    title: "Job Opportunities",
+    description: "Explore matched ecosystem job openings.",
     icon: Briefcase,
-    path: "/jobs",
-    color: "bg-amber-600",
+    path: "/recruitment/jobs",
+    bgColor: "bg-amber-50",
+    iconColor: "text-amber-600",
   },
 ];
 
@@ -45,20 +53,21 @@ export default function QuickActions() {
           <button
             key={action.title}
             onClick={() => navigate(action.path)}
-            className="group rounded-2xl border border-slate-800 bg-slate-900 p-6 text-left transition-all duration-300 hover:-translate-y-1 hover:border-cyan-500 hover:bg-slate-800"
+            className="group text-left ve-card ve-card-interactive"
+            style={{ padding: 18, border: "1px solid #e2e8f0" }}
           >
             <div
-              className={`mb-4 flex h-12 w-12 items-center justify-center rounded-xl ${action.color}`}
+              className={`mb-3 flex h-10 w-10 items-center justify-center rounded-lg ${action.bgColor} ${action.iconColor} transition-colors group-hover:bg-opacity-80`}
             >
-              <Icon size={22} className="text-white" />
+              <Icon size={18} />
             </div>
 
-            <h3 className="text-lg font-semibold text-white">
+            <h3 style={{ fontSize: 13, fontWeight: 600, color: '#0f172a' }}>
               {action.title}
             </h3>
 
-            <p className="mt-2 text-sm text-slate-400">
-              Open module
+            <p style={{ marginTop: 4, fontSize: 11, color: '#64748b', lineHeight: 1.4 }}>
+              {action.description}
             </p>
           </button>
         );

@@ -1,5 +1,4 @@
 from datetime import datetime
-
 from pydantic import BaseModel
 
 
@@ -22,3 +21,10 @@ class DashboardResponse(BaseModel):
     roadmap_progress: float
     career_readiness: float
     recent_interviews: list[RecentInterview]
+
+    # New Ecosystem fields
+    target_role: str | None = None
+    dream_company: str | None = None
+    today_mission: str | None = None
+    next_skill: str | None = None
+    ecosystem_stage: str | None = None

@@ -23,3 +23,14 @@ class UserResponse(BaseModel):
     name: str
     email: EmailStr
     role: str
+    status: str = "active"
+    onboarding_complete: bool = False
+
+    class Config:
+        from_attributes = True
+
+
+class AuthResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: UserResponse

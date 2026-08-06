@@ -1,3 +1,11 @@
+import sys
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+        sys.stderr.reconfigure(encoding='utf-8')
+    except Exception:
+        pass
+
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -24,12 +32,30 @@ from app.api.v1.scraper import router as scraper_router
 from app.api.v1.roadmap import router as roadmap_router
 from app.api.v1.dashboard import router as dashboard_router
 from app.api.v1.interview import router as interview_router
+from app.api.v1.onboarding import router as onboarding_router
 
 # Company
 from app.api.v1.company import router as company_router
 from app.api.v1.company_jobs import router as company_jobs_router
 from app.api.v1.applications import router as applications_router
 from app.api.v1.admin import router as admin_router
+from app.api.v1.employee import router as employee_router
+
+# Phase 9 — AI Platform
+from app.api.v1.ai_mentor import router as ai_mentor_router
+from app.api.v1.ai_resume import router as ai_resume_router
+from app.api.v1.ai_coding import router as ai_coding_router
+from app.api.v1.problems import router as problems_router, submissions_router, coding_meta_router
+from app.api.v1.notifications import router as notifications_router
+from app.api.v1.health import router as health_router
+from app.api.v1.courses import router as courses_router
+from app.api.v1.recruitment import router as recruitment_router
+from app.api.v1.websocket import router as websocket_router
+from app.api.v1.networking import router as networking_router, profiles_router
+from app.api.v1.mentorship import router as mentorship_router
+from app.api.v1.messages import router as messages_router
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
@@ -92,6 +118,7 @@ app.include_router(interview_router, prefix="/api/v1")
 # Student Profile
 # =========================
 app.include_router(profile_router, prefix="/api/v1")
+app.include_router(onboarding_router, prefix="/api/v1")
 app.include_router(education_router, prefix="/api/v1")
 app.include_router(experience_router, prefix="/api/v1")
 app.include_router(project_router, prefix="/api/v1")
@@ -118,6 +145,50 @@ app.include_router(applications_router, prefix="/api/v1")
 # =========================
 app.include_router(admin_router, prefix="/api/v1")
 
+# =========================
+# Employee
+# =========================
+app.include_router(employee_router, prefix="/api/v1")
+
+# =========================================
+# Phase 9 — AI Platform Routes
+# =========================================
+
+# AI Career Mentor + Salary + Career Path + Trends + Research + PDF Chat
+app.include_router(ai_mentor_router, prefix="/api/v1")
+
+# AI Resume Builder + Skill Gap + ATS Detail
+app.include_router(ai_resume_router, prefix="/api/v1")
+
+# AI Coding Assistant
+app.include_router(ai_coding_router, prefix="/api/v1")
+
+# Coding Problems & Submissions
+app.include_router(problems_router, prefix="/api/v1")
+app.include_router(submissions_router, prefix="/api/v1")
+app.include_router(coding_meta_router, prefix="/api/v1")
+
+# Courses Platform
+app.include_router(courses_router, prefix="/api/v1")
+
+# Recruitment Platform
+app.include_router(recruitment_router, prefix="/api/v1")
+
+# WebSockets
+app.include_router(websocket_router)
+
+# Social & Mentorship & Messaging Platform Routes
+app.include_router(networking_router, prefix="/api/v1")
+app.include_router(profiles_router, prefix="/api/v1")
+app.include_router(mentorship_router, prefix="/api/v1")
+app.include_router(messages_router, prefix="/api/v1")
+
+# Notifications
+app.include_router(notifications_router, prefix="/api/v1")
+
+# Health Check (no auth)
+app.include_router(health_router, prefix="/api/v1")
+
 
 @app.get("/", tags=["Root"])
 def root():
@@ -125,4 +196,6 @@ def root():
         "message": "Vedha AI Backend is running",
         "version": settings.APP_VERSION,
         "status": "healthy",
+        "docs": "/docs",
+        "phase": "9 — AI Platform",
     }

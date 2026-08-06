@@ -76,8 +76,8 @@ class DashboardRepository:
     def get_average_interview_score(
         self,
         student_id: int,
-    ):
-        return (
+    ) -> float:
+        val = (
             self.db.query(
                 func.avg(
                     InterviewSession.overall_score
@@ -89,12 +89,13 @@ class DashboardRepository:
             )
             .scalar()
         )
+        return float(val) if val is not None else 0.0
 
     def get_best_interview_score(
         self,
         student_id: int,
-    ):
-        return (
+    ) -> float:
+        val = (
             self.db.query(
                 func.max(
                     InterviewSession.overall_score
@@ -106,6 +107,7 @@ class DashboardRepository:
             )
             .scalar()
         )
+        return float(val) if val is not None else 0.0
 
     def get_recent_interviews(
         self,

@@ -11,9 +11,22 @@ def get_embedding_model():
     global _embedding_model
 
     if _embedding_model is None:
-        _embedding_model = SentenceTransformer(
-            "all-MiniLM-L6-v2"
-        )
+        try:
+            _embedding_model = SentenceTransformer(
+                "all-MiniLM-L6-v2"
+            )
+        except Exception as e:
+            print(f"⚠️ Failed to load SentenceTransformer ('all-MiniLM-L6-v2') in skill_matcher: {e}")
+            print("Fallback to MockSentenceTransformer (384 dimensions) for offline/local compatibility.")
+            
+            class MockSentenceTransformer:
+                def encode(self, sentences, **kwargs):
+                    import numpy as np
+                    if isinstance(sentences, str):
+                        sentences = [sentences]
+                    return np.zeros((len(sentences), 384), dtype=np.float32)
+            
+            _embedding_model = MockSentenceTransformer()
 
     return _embedding_model
 

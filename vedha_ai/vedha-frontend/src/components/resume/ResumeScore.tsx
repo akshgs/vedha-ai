@@ -13,7 +13,7 @@ export default function ResumeScore({
       : "text-red-400";
 
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
+    <div className="glass-card p-6">
       <p className="text-slate-400">
         ATS Score
       </p>
@@ -22,7 +22,7 @@ export default function ResumeScore({
         {score}/100
       </h3>
 
-      <div className="mt-5 h-3 overflow-hidden rounded-full bg-slate-700">
+      <div className="mt-5 h-3 overflow-hidden rounded-full bg-slate-955 border border-slate-900">
         <div
           className="h-full rounded-full bg-cyan-500 transition-all duration-700"
           style={{ width: `${score}%` }}

@@ -7,6 +7,7 @@ from sqlalchemy import (
     ForeignKey,
     Integer,
     String,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -15,6 +16,9 @@ from app.database.base import Base
 
 class Skill(Base):
     __tablename__ = "skills"
+    __table_args__ = (
+        UniqueConstraint("user_id", "skill_name", name="uq_user_skill"),
+    )
 
     id: Mapped[int] = mapped_column(
         Integer,

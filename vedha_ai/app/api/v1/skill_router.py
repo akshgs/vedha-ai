@@ -35,10 +35,21 @@ def create_skill(
 ):
     service = get_service(db)
 
-    return service.create(
-        skill,
-        current_user.id,
-    )
+    try:
+        return service.create(
+            skill,
+            current_user.id,
+        )
+    except ValueError as e:
+        if "already exists" in str(e):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=str(e),
+            )
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
 
 
 @router.get(
@@ -74,8 +85,18 @@ def update_skill(
         )
 
     except ValueError as e:
+        if "not found" in str(e):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=str(e),
+            )
+        if "already exists" in str(e):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=str(e),
+            )
         raise HTTPException(
-            status_code=404,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
         )
 

@@ -7,16 +7,19 @@ from app.ai.prompts import INTERVIEW_GENERATION_PROMPT
 from app.ai.rag_engine import retrieve_context
 
 
-llm = get_llm(
-    model="llama-3.3-70b-versatile",
-    temperature=0.2,
-)
+_llm = None
+_str_parser = StrOutputParser()
 
-generation_chain = (
-    INTERVIEW_GENERATION_PROMPT
-    | llm
-    | StrOutputParser()
-)
+
+def _get_generation_chain():
+    global _llm
+    if _llm is None:
+        _llm = get_llm(
+            model="llama-3.3-70b-versatile",
+            temperature=0.2,
+        )
+    return INTERVIEW_GENERATION_PROMPT | _llm | _str_parser
+
 
 
 def _validate_questions(data: dict) -> dict:
@@ -74,7 +77,7 @@ def generate_ai_questions(
 
     context = retrieve_context(query)
 
-    raw_output = generation_chain.invoke(
+    raw_output = _get_generation_chain().invoke(
         {
             "context": context,
             "role": role,

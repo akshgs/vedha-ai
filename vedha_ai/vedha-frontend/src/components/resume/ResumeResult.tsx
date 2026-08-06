@@ -14,7 +14,7 @@ export default function ResumeResult({
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900 p-8">
+      <div className="glass-card p-8">
         <h2 className="text-3xl font-bold text-white">
           Resume Analysis
         </h2>
@@ -32,7 +32,7 @@ export default function ResumeResult({
 
         <ResumeScore score={analysis.ats_score} />
 
-        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
+        <div className="glass-card p-6">
           <p className="text-slate-400">
             Match Percentage
           </p>
@@ -42,7 +42,7 @@ export default function ResumeResult({
           </h3>
         </div>
 
-        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
+        <div className="glass-card p-6">
           <p className="text-slate-400">
             Skills Found
           </p>
@@ -52,7 +52,7 @@ export default function ResumeResult({
           </h3>
         </div>
 
-        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
+        <div className="glass-card p-6">
           <p className="text-slate-400">
             Missing Skills
           </p>
@@ -71,7 +71,7 @@ export default function ResumeResult({
       />
 
       {/* AI Feedback */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900 p-8">
+      <div className="glass-card p-8">
         <h3 className="mb-6 text-2xl font-bold text-white">
           AI Career Feedback
         </h3>

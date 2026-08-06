@@ -84,17 +84,17 @@ export default function CompanyDashboard() {
     <DashboardLayout>
       <div className="mx-auto max-w-7xl space-y-8">
         {/* Header */}
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between border-b border-[#1F2937] pb-8">
           <div>
-            <h1 className="text-4xl font-bold text-white">Recruitment Hub 🏢</h1>
-            <p className="mt-2 text-slate-400">
+            <h1 className="text-[36px] font-bold text-white tracking-tight">Recruitment Hub 🏢</h1>
+            <p className="mt-2 text-[#94A3B8] text-[14px]">
               Manage corporate job listings, screen candidate matches, and review scheduled interviews.
             </p>
           </div>
           <div>
             <Link
               to="/company/jobs"
-              className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 font-semibold text-white shadow-lg transition hover:bg-emerald-500"
+              className="inline-flex items-center gap-2 rounded-lg bg-[#3B82F6] px-5 py-[14px] text-sm font-semibold text-white transition hover:bg-[#2563EB]"
             >
               <Plus size={18} />
               Post a New Job

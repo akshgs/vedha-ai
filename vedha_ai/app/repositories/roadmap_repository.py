@@ -16,13 +16,14 @@ class RoadmapRepository:
         student_id: int,
         target_role: str,
         roadmap_json: str,
+        progress: float = 0.0,
     ) -> Roadmap:
 
         roadmap = Roadmap(
             student_id=student_id,
             target_role=target_role,
             roadmap_json=roadmap_json,
-            progress=0,
+            progress=progress,
         )
 
         self.db.add(roadmap)

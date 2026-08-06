@@ -23,6 +23,7 @@ export interface User {
   email: string;
   role: string;
   status: string;
+  onboarding_complete?: boolean;
 }
 
 export async function login(data: LoginRequest): Promise<LoginResponse> {

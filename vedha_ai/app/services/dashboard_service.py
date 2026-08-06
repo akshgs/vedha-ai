@@ -1,8 +1,11 @@
+import json
 from fastapi import HTTPException
 
 from app.repositories.dashboard_repository import DashboardRepository
 from app.repositories.job_repository import JobRepository
 from app.repositories.roadmap_repository import RoadmapRepository
+from app.models.profile import Profile
+from app.models.ecosystem import EcosystemStage
 
 
 class DashboardService:
@@ -21,7 +24,7 @@ class DashboardService:
         self,
         student_id: int,
     ):
-
+        db = self.roadmap_repository.db
         student = self.dashboard_repository.get_student(
             student_id
         )
@@ -74,17 +77,51 @@ class DashboardService:
             )
         )
 
+        # Profile fields
+        profile = db.query(Profile).filter(Profile.user_id == student_id).first()
+        target_role = profile.target_role if profile else "Full Stack Developer"
+        dream_company = profile.dream_company if profile else None
+
+        # EcosystemStage
+        eco_stage_rec = db.query(EcosystemStage).filter(EcosystemStage.student_id == student_id).first()
+        ecosystem_stage = eco_stage_rec.current_stage if eco_stage_rec else "onboarding"
+
+        # Roadmap progress
         roadmap = (
             self.roadmap_repository.get_latest_roadmap(
                 student_id
             )
         )
 
-        roadmap_progress = (
-            float(roadmap.progress)
-            if roadmap and roadmap.progress is not None
-            else 0.0
-        )
+        roadmap_progress = 0.0
+        today_mission = "Complete onboarding to generate your personal learning roadmap."
+        next_skill = "Ecosystem Onboarding"
+
+        if roadmap:
+            roadmap_progress = float(roadmap.progress) if roadmap.progress is not None else 0.0
+            try:
+                data = json.loads(roadmap.roadmap_json)
+                missing = data.get("missing_skills", [])
+                
+                if missing:
+                    next_skill = missing[0].capitalize()
+                    today_mission = f"Master the next skill on your roadmap: '{next_skill}' in Learning Academy."
+                else:
+                    nodes = data.get("nodes", [])
+                    active_node = next((n for n in nodes if n["status"] == "in_progress"), None)
+                    if active_node:
+                        today_mission = f"Unlock and master the '{active_node['name']}' module in Learning Academy."
+                        next_skill = active_node["name"]
+                    else:
+                        locked_node = next((n for n in nodes if n["status"] == "locked"), None)
+                        if locked_node:
+                            today_mission = f"Prerequisite pending. Unlock the '{locked_node['name']}' module."
+                            next_skill = locked_node["name"]
+                        else:
+                            today_mission = "All learning roadmap milestones completed! Start mock interviews or search for jobs."
+                            next_skill = "Mock Interview Preparation"
+            except Exception:
+                pass
 
         resume_score = (
             float(resume.match_percent)
@@ -133,4 +170,10 @@ class DashboardService:
                 }
                 for interview in recent_interviews
             ],
+            # New Ecosystem fields
+            "target_role": target_role,
+            "dream_company": dream_company,
+            "today_mission": today_mission,
+            "next_skill": next_skill,
+            "ecosystem_stage": ecosystem_stage,
         }

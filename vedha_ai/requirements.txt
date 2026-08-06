@@ -10,49 +10,58 @@ psycopg2-binary
 passlib[bcrypt]
 python-jose[cryptography]
 
-pydantic
+# Pydantic + email validation (EmailStr requires email-validator)
+pydantic[email]
 pydantic-settings
 
+# LangChain ecosystem
 langchain
 langchain-core
 langchain-community
 langchain-groq
+langchain-huggingface
+langchain-text-splitters
 
 groq
 
+# ML / Embeddings
 sentence-transformers
 transformers
 torch
 faiss-cpu
 chromadb
 
+# NLP
 spacy
 en-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.1/en_core_web_sm-3.7.1-py3-none-any.whl
 
+# Data science
 numpy
 pandas
 scikit-learn
 scipy
 
+# Document parsing
 pdfplumber
 python-docx
 PyPDF2
 
+# Web / scraping
 beautifulsoup4
 requests
 feedparser
 
+# Computer vision
 opencv-python
 mediapipe
 
+# Utilities
 joblib
-
 httpx
-
 tqdm
-
 pillow
-
 python-dateutil
-
 typing-extensions
+
+# Email validation (explicit — required by pydantic[email] / EmailStr)
+email-validator>=2.0.0

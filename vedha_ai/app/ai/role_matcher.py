@@ -116,3 +116,31 @@ def role_match_score(
         final_score,
         1,
     )
+
+
+def is_role_relevant(target_role: str, job_title: str) -> bool:
+    import re
+    target_role_lower = target_role.lower()
+    job_title_lower = job_title.lower()
+    
+    if target_role_lower in job_title_lower or job_title_lower in target_role_lower:
+        return True
+
+    target_words = set(re.sub(r'[^a-zA-Z0-9\s]', ' ', target_role_lower).split())
+    stopwords = {"developer", "engineer", "engineering", "manager", "lead", "architect", "intern", "junior", "senior", "staff", "associate", "analyst", "specialist", "assistant"}
+    filtered_target_words = target_words - stopwords
+    if not filtered_target_words:
+        filtered_target_words = target_words
+
+    job_words = set(re.sub(r'[^a-zA-Z0-9\s]', ' ', job_title_lower).split())
+    if len(filtered_target_words.intersection(job_words)) > 0:
+        return True
+
+    # Check case-insensitive ROLE_KEYWORDS
+    role_keywords_lower = {k.lower(): [v.lower() for v in val] for k, val in ROLE_KEYWORDS.items()}
+    keywords = role_keywords_lower.get(target_role_lower, [])
+    for kw in keywords:
+        if kw in job_title_lower:
+            return True
+
+    return False

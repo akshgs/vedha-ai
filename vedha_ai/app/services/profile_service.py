@@ -13,9 +13,17 @@ class ProfileService:
         user_id: int,
     ) -> Profile | None:
 
-        return self.repository.get_by_user_id(
+        profile = self.repository.get_by_user_id(
             user_id=user_id,
         )
+
+        if not profile:
+            profile = self.repository.create(
+                user_id=user_id,
+                profile=ProfileCreate(),
+            )
+
+        return profile
 
     def create_profile(
         self,

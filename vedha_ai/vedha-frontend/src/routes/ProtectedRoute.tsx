@@ -1,7 +1,14 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import useAuth from "@/hooks/useAuth";
 
-type UserRole = "student" | "company" | "admin";
+type UserRole =
+  | "student"
+  | "employee"
+  | "mentor"
+  | "recruiter"
+  | "company"
+  | "university"
+  | "admin";
 
 type Props = {
   children: React.ReactNode;
@@ -17,6 +24,8 @@ export default function ProtectedRoute({
     isAuthenticated,
     user,
   } = useAuth();
+  
+  const location = useLocation();
 
   // Loading State
   if (loading) {
@@ -32,6 +41,19 @@ export default function ProtectedRoute({
     return <Navigate to="/login" replace />;
   }
 
+  const isOnboardingPath = location.pathname === "/onboarding";
+  const isComplete = user.onboarding_complete || localStorage.getItem("onboarding_complete") === "true";
+
+  // If student is not onboarded and tries to access general student routes, gate them to onboarding
+  if (user.role === "student" && !isComplete && !isOnboardingPath) {
+    return <Navigate to="/onboarding" replace />;
+  }
+
+  // If student is onboarded and tries to revisit onboarding page, redirect to dashboard
+  if (user.role === "student" && isComplete && isOnboardingPath) {
+    return <Navigate to="/student/dashboard" replace />;
+  }
+
   // Role Authorization
   if (role && user.role !== role) {
     switch (user.role) {
@@ -43,10 +65,42 @@ export default function ProtectedRoute({
           />
         );
 
+      case "employee":
+        return (
+          <Navigate
+            to="/employee/dashboard"
+            replace
+          />
+        );
+
+      case "mentor":
+        return (
+          <Navigate
+            to="/mentor/dashboard"
+            replace
+          />
+        );
+
       case "company":
         return (
           <Navigate
             to="/company/dashboard"
+            replace
+          />
+        );
+
+      case "recruiter":
+        return (
+          <Navigate
+            to="/recruiter/dashboard"
+            replace
+          />
+        );
+
+      case "university":
+        return (
+          <Navigate
+            to="/university/dashboard"
             replace
           />
         );

@@ -9,6 +9,12 @@ from app.utils.roadmap_loader import (
 )
 
 
+def normalize_skill(skill: str) -> str:
+    import re
+    cleaned = re.sub(r'[^a-zA-Z0-9\s+#]', ' ', skill)
+    return " ".join(cleaned.lower().split())
+
+
 class RoadmapService:
 
     def __init__(
@@ -31,24 +37,18 @@ class RoadmapService:
         )
 
         if resume is None:
-            raise ValueError(
-                "Resume analysis not found."
-            )
-
-        resume_skills = json.loads(
-            resume.matched_skills
-        )
-
-        target_role = resume.target_role
+            target_role = "Full Stack Developer"
+            resume_skills = []
+        else:
+            target_role = resume.target_role or "Full Stack Developer"
+            try:
+                resume_skills = json.loads(resume.matched_skills) if resume.matched_skills else []
+            except Exception:
+                resume_skills = []
 
         roadmap = get_roadmap_template(
             target_role
         )
-
-        if roadmap is None:
-            raise ValueError(
-                "Roadmap template not found."
-            )
 
         required_skills = roadmap[
             "required_skills"
@@ -58,13 +58,12 @@ class RoadmapService:
         missing_skills = []
 
         resume_skill_set = {
-            skill.lower()
+            normalize_skill(skill)
             for skill in resume_skills
         }
 
         for skill in required_skills:
-
-            if skill.lower() in resume_skill_set:
+            if normalize_skill(skill) in resume_skill_set:
                 completed_skills.append(skill)
             else:
                 missing_skills.append(skill)
@@ -92,6 +91,7 @@ class RoadmapService:
             roadmap_json=json.dumps(
                 roadmap_data
             ),
+            progress=completion,
         )
 
         return roadmap_data

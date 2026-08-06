@@ -11,6 +11,8 @@ class AdminDashboardResponse(BaseModel):
     total_users: int
     total_students: int
     total_companies: int
+    total_employees: int
+    total_courses: int
     total_jobs: int
     active_jobs: int
     inactive_jobs: int
@@ -18,6 +20,11 @@ class AdminDashboardResponse(BaseModel):
     total_resumes: int
     total_interviews: int
     completed_interviews: int
+    total_offers: int
+    total_active_users: int
+    learning_progress_avg: float
+    job_statistics: dict
+    active_users_trend: list[dict]
 
 
 # ==========================================

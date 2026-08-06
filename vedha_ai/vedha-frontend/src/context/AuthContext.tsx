@@ -21,6 +21,9 @@ type AuthContextType = {
 
   isStudent: boolean;
   isCompany: boolean;
+  isEmployee: boolean;
+  isRecruiter: boolean;
+  isMentor: boolean;
   isAdmin: boolean;
 
   login: (data: LoginRequest) => Promise<void>;
@@ -40,6 +43,7 @@ const saveUserToStorage = (user: User) => {
   localStorage.setItem("user_name", user.name);
   localStorage.setItem("user_email", user.email);
   localStorage.setItem("user_role", user.role);
+  localStorage.setItem("onboarding_complete", String(user.onboarding_complete ?? false));
 };
 
 const clearUserStorage = () => {
@@ -49,6 +53,7 @@ const clearUserStorage = () => {
   localStorage.removeItem("user_name");
   localStorage.removeItem("user_email");
   localStorage.removeItem("user_role");
+  localStorage.removeItem("onboarding_complete");
 };
 
 export function AuthProvider({ children }: Props) {
@@ -111,6 +116,9 @@ export function AuthProvider({ children }: Props) {
 
     isStudent: user?.role === "student",
     isCompany: user?.role === "company",
+    isEmployee: user?.role === "employee",
+    isRecruiter: user?.role === "recruiter",
+    isMentor: user?.role === "mentor",
     isAdmin: user?.role === "admin",
 
     login,

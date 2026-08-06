@@ -7,6 +7,7 @@ from app.schemas.interview import (
     InterviewCompleteResponse,
     InterviewDetailsResponse,
     InterviewEvaluateRequest,
+    InterviewEvaluateResponse,
     InterviewGenerateRequest,
     InterviewGenerateResponse,
     InterviewHistoryResponse,
@@ -38,7 +39,10 @@ def generate_interview(
     )
 
 
-@router.post("/evaluate")
+@router.post(
+    "/evaluate",
+    response_model=InterviewEvaluateResponse,
+)
 def evaluate_interview(
     request: InterviewEvaluateRequest,
     current_user=Depends(get_current_user),

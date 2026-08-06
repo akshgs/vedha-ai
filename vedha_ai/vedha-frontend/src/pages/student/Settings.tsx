@@ -61,24 +61,24 @@ export default function Settings() {
 
   return (
     <DashboardLayout>
-      <div className="mx-auto max-w-4xl space-y-8">
+      <div className="mx-auto max-w-4xl space-y-6">
         <div>
-          <h1 className="text-3xl font-bold">Portal Settings</h1>
-          <p className="mt-2 text-slate-400">
+          <h1 className="page-title">Portal Settings</h1>
+          <p className="page-subtitle">
             Configure your notifications, security parameters, and profile visibility.
           </p>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
           {/* Notifications Card */}
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-xl backdrop-blur-sm">
-            <div className="mb-6 flex items-center gap-3 border-b border-slate-800 pb-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-400">
-                <Bell size={20} />
+          <div className="ve-card">
+            <div className="ve-card-header">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/15 flex-shrink-0">
+                <Bell size={18} />
               </div>
               <div>
-                <h2 className="text-lg font-bold">Notifications</h2>
-                <p className="text-xs text-slate-400">Decide how we contact you</p>
+                <h2 className="ve-card-title">Notifications</h2>
+                <p className="ve-card-subtitle">Decide how we contact you</p>
               </div>
             </div>
 
@@ -158,69 +158,69 @@ export default function Settings() {
           </div>
 
           {/* Change Password Card */}
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-xl backdrop-blur-sm">
-            <div className="mb-6 flex items-center gap-3 border-b border-slate-800 pb-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/10 text-violet-400">
-                <Key size={20} />
+          <div className="ve-card">
+            <div className="ve-card-header">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-500/10 text-violet-400 border border-violet-500/15 flex-shrink-0">
+                <Key size={18} />
               </div>
               <div>
-                <h2 className="text-lg font-bold">Change Password</h2>
-                <p className="text-xs text-slate-400">Secure your portal account</p>
+                <h2 className="ve-card-title">Change Password</h2>
+                <p className="ve-card-subtitle">Secure your portal account</p>
               </div>
             </div>
 
             <form onSubmit={handleSubmit(handlePasswordChange)} className="space-y-4">
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold text-slate-300">
+              <div className="ve-form-group">
+                <label className="ve-label">
                   Current Password
                 </label>
                 <input
                   type="password"
                   placeholder="••••••••"
                   {...register("currentPassword")}
-                  className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-2.5 text-sm text-white placeholder-slate-600 outline-none transition focus:border-violet-500"
+                  className="ve-input"
                 />
                 {errors.currentPassword && (
-                  <p className="mt-1 text-xs text-red-400">{errors.currentPassword.message}</p>
+                  <p className="ve-error">{errors.currentPassword.message}</p>
                 )}
               </div>
 
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold text-slate-300">
+              <div className="ve-form-group">
+                <label className="ve-label">
                   New Password
                 </label>
                 <input
                   type="password"
                   placeholder="••••••••"
                   {...register("newPassword")}
-                  className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-2.5 text-sm text-white placeholder-slate-600 outline-none transition focus:border-violet-500"
+                  className="ve-input"
                 />
                 {errors.newPassword && (
-                  <p className="mt-1 text-xs text-red-400">{errors.newPassword.message}</p>
+                  <p className="ve-error">{errors.newPassword.message}</p>
                 )}
               </div>
 
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold text-slate-300">
+              <div className="ve-form-group">
+                <label className="ve-label">
                   Confirm New Password
                 </label>
                 <input
                   type="password"
                   placeholder="••••••••"
                   {...register("confirmPassword")}
-                  className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-2.5 text-sm text-white placeholder-slate-600 outline-none transition focus:border-violet-500"
+                  className="ve-input"
                 />
                 {errors.confirmPassword && (
-                  <p className="mt-1 text-xs text-red-400">{errors.confirmPassword.message}</p>
+                  <p className="ve-error">{errors.confirmPassword.message}</p>
                 )}
               </div>
 
-              <div className="mt-6 flex justify-end">
+              <div className="pt-2 flex justify-end">
                 <Button type="submit" disabled={isSubmitting} className="flex items-center gap-2">
                   {isSubmitting ? (
-                    <RefreshCw size={16} className="animate-spin" />
+                    <RefreshCw size={14} className="animate-spin" />
                   ) : (
-                    <Shield size={16} />
+                    <Shield size={14} />
                   )}
                   Update Password
                 </Button>

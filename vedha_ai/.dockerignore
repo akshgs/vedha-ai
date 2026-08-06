@@ -1,0 +1,17 @@
+.git
+.venv
+__pycache__
+*.pyc
+node_modules
+dist
+build
+.cache
+.vscode
+.idea
+.coverage
+.pytest_cache
+*.db
+vedha-frontend
+
+# Legacy archived code — excluded from Docker build
+legacy/

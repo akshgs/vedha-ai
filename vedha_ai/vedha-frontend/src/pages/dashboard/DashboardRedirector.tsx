@@ -19,8 +19,15 @@ export default function DashboardRedirector() {
   switch (user.role) {
     case "student":
       return <Navigate to="/student/dashboard" replace />;
+    case "employee":
+      return <Navigate to="/employee/dashboard" replace />;
+    case "mentor":
+      return <Navigate to="/mentor/dashboard" replace />;
     case "company":
+    case "recruiter":
       return <Navigate to="/company/dashboard" replace />;
+    case "university":
+      return <Navigate to="/university/dashboard" replace />;
     case "admin":
       return <Navigate to="/admin/dashboard" replace />;
     default:
