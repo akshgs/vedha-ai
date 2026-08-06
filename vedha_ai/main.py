@@ -56,10 +56,27 @@ from app.api.v1.mentorship import router as mentorship_router
 from app.api.v1.messages import router as messages_router
 
 
+import asyncio
+import time
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    init_db()
-    print("✅ Database initialized")
+    t_start = time.perf_counter()
+    print(f"[STARTUP 1/3] Starting Vedha AI v{settings.APP_VERSION} in {settings.ENVIRONMENT} mode...")
+
+    # Phase 1: Verify DB connectivity and create tables (non-blocking)
+    t_db = time.perf_counter()
+    try:
+        init_db()
+        db_elapsed = (time.perf_counter() - t_db) * 1000
+        print(f"[STARTUP 2/3] Database schema verified in {db_elapsed:.2f}ms")
+    except Exception as e:
+        print(f"⚠️ [STARTUP WARNING] Database schema verification deferred: {e}")
+
+    total_startup_ms = (time.perf_counter() - t_start) * 1000
+    print(f"[STARTUP 3/3] FastAPI lifespan ready in {total_startup_ms:.2f}ms — Binding Uvicorn HTTP server socket now.")
+
     yield
     print("👋 Vedha AI stopped")
 

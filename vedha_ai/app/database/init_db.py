@@ -557,7 +557,7 @@ def seed_data(db: Session) -> None:
 
 
 def init_db() -> None:
-    # Run simple ALTER command to add onboarding_complete column to users table if not exists
+    """Initialize database tables without blocking startup with data seeding."""
     from sqlalchemy import text
     try:
         with engine.begin() as conn:
@@ -568,8 +568,16 @@ def init_db() -> None:
         pass
 
     Base.metadata.create_all(bind=engine)
+    print("[INIT] Database schema verified & created successfully.")
+
+
+def run_seed() -> None:
+    """Standalone CLI seeder runner."""
+    init_db()
     db = SessionLocal()
     try:
+        print("[SEED] Starting database data seeding...")
         seed_data(db)
+        print("[SEED] Data seeding completed successfully!")
     finally:
         db.close()
