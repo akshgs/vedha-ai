@@ -54,7 +54,5 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health/ping')"
 
-# Start with uvicorn
-# workers=1: prevents init_db() race condition (create_all UniqueViolation on sequences)
-# Scale horizontally via Docker replicas instead of in-process workers if needed
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1", "--log-level", "info"]
+# Start with uvicorn (dynamic PORT binding for Railway/Render/Docker)
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1 --log-level info"]
