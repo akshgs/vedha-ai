@@ -13,15 +13,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# Install Python dependencies
-COPY requirements.txt .
+# Copy requirements.txt (supports root context or vedha_ai context)
+COPY vedha_ai/requirements.txt* requirements.txt* ./
 RUN pip install --upgrade pip && \
     pip install --no-cache-dir \
         --extra-index-url https://download.pytorch.org/whl/cpu \
         -r requirements.txt
 
-# ── Explicit extras install (pip skips extras when package is already
-#    satisfied as a transitive dependency — this ensures they are present)
+# ── Explicit extras install
 RUN pip install --no-cache-dir \
         "email-validator>=2.0.0" \
         "langchain-text-splitters"
@@ -39,8 +38,14 @@ WORKDIR /app
 COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
 
-# Copy application code
+# Copy repository application code
 COPY . .
+
+# Set PYTHONPATH and WORKDIR to handle both root and subfolder build contexts on Railway
+ENV PYTHONPATH="/app/vedha_ai:/app"
+
+# If vedha_ai folder exists inside /app, use it as working directory
+WORKDIR /app/vedha_ai
 
 # Non-root user for security
 RUN useradd --create-home --shell /bin/bash vedha && \
