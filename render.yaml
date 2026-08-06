@@ -9,7 +9,7 @@ services:
     runtime: python
     region: singapore
     plan: free
-    rootDir: vedha_ai
+    rootDir: backend
     buildCommand: "pip install -U pip setuptools wheel && pip install -r requirements.txt"
     startCommand: "uvicorn main:app --host 0.0.0.0 --port $PORT --workers 1"
     healthCheckPath: "/api/v1/health/ping"
