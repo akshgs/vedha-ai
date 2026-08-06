@@ -77,3 +77,9 @@ Thumbs.db
 # ===========================
 dist/
 build/
+
+# ===========================
+# Legacy Archive
+# ===========================
+# vedha_ai/legacy/ is intentionally git-tracked as a safe archive.
+# To fully remove from git history, delete and commit separately.

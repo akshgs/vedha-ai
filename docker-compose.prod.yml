@@ -1,0 +1,115 @@
+version: "3.9"
+
+services:
+  # ── PostgreSQL Database (Network Isolated) ────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: vedha_postgres_prod
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data_prod:/var/lib/postgresql/data
+    # Exposing ports is disabled on production compose to restrict DB access
+    # to the isolated internal backend docker bridge network only.
+    expose:
+      - "5432"
+    networks:
+      - vedha_prod_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Redis Cache Engine (Network Isolated) ────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: vedha_redis_prod
+    restart: always
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis_data_prod:/data
+    expose:
+      - "6379"
+    networks:
+      - vedha_prod_net
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # ── FastAPI Backend API ──────────────────────────────────────────
+  backend:
+    build:
+      context: ./vedha_ai
+      dockerfile: Dockerfile
+    container_name: vedha_backend_prod
+    restart: always
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      ENVIRONMENT: production
+      DEBUG: "false"
+    expose:
+      - "8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./vedha_ai/app/knowledge:/app/app/knowledge:ro
+    networks:
+      - vedha_prod_net
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health/ping')\""]
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
+
+  # ── Vite + React Frontend (Internal Proxy Target) ───────────────
+  frontend:
+    build:
+      context: ./vedha_ai/vedha-frontend
+      dockerfile: Dockerfile
+    container_name: vedha_frontend_prod
+    restart: always
+    expose:
+      - "80"
+    depends_on:
+      - backend
+    networks:
+      - vedha_prod_net
+
+  # ── Nginx Gateway (Public Entry Point) ──────────────────────────
+  nginx:
+    image: nginx:alpine
+    container_name: vedha_nginx_prod
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deployment/nginx.conf:/etc/nginx/nginx.conf:ro
+      # Directory mapping SSL certificates inside container
+      - ./deployment/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - vedha_prod_net
+
+volumes:
+  postgres_data_prod:
+  redis_data_prod:
+
+networks:
+  vedha_prod_net:
+    driver: bridge
