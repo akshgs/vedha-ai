@@ -1,0 +1,33 @@
+# ================================================================
+# Vedha AI — Render Blueprint Deployment Specification
+# ================================================================
+
+services:
+  # Backend Python FastAPI Service
+  - type: web
+    name: vedha-ai-backend
+    runtime: python
+    region: singapore
+    plan: free
+    rootDir: vedha_ai
+    buildCommand: "pip install -U pip setuptools wheel && pip install -r requirements.txt"
+    startCommand: "uvicorn main:app --host 0.0.0.0 --port $PORT --workers 1"
+    healthCheckPath: "/api/v1/health/ping"
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.10"
+      - key: ENVIRONMENT
+        value: "production"
+      - key: PORT
+        value: "8000"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ALGORITHM
+        value: "HS256"
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "1440"
+      - key: ALLOWED_ORIGINS
+        value: '["*"]'
+      - key: GROQ_API_KEY
+        sync: false
