@@ -4,18 +4,37 @@ import { toast } from "sonner";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import Card from "@/components/ui/card/Card";
 import Button from "@/components/ui/button/Button";
-import { getRankedCandidates, type Candidate } from "@/services/recruiter";
+import { getRankedCandidates, getRecruiterJobs, shortlistCandidate, type Candidate, type RecruiterJob } from "@/services/recruiter";
 
 export default function AIRanking() {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
-  const [selectedJobId, setSelectedJobId] = useState(1);
+  const [jobs, setJobs] = useState<RecruiterJob[]>([]);
+  const [selectedJobId, setSelectedJobId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    async function loadJobs() {
+      try {
+        const list = await getRecruiterJobs();
+        setJobs(list);
+        if (list.length > 0) {
+          setSelectedJobId(list[0].id);
+        } else {
+          setLoading(false);
+        }
+      } catch {
+        toast.error("Failed to query job positions.");
+      }
+    }
+    void loadJobs();
+  }, []);
+
+  useEffect(() => {
+    if (selectedJobId === null) return;
     async function loadRankings() {
       try {
         setLoading(true);
-        const list = await getRankedCandidates(selectedJobId);
+        const list = await getRankedCandidates(selectedJobId as number);
         setCandidates(list);
       } catch {
         toast.error("Failed to query AI ranking matrix.");
@@ -45,14 +64,21 @@ export default function AIRanking() {
         <Card variant="glass" className="p-6">
           <div className="max-w-xs space-y-1.5">
             <label className="block text-xs font-semibold text-slate-400">Select Target Position</label>
-            <select
-              value={selectedJobId}
-              onChange={(e) => setSelectedJobId(Number(e.target.value))}
-              className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3 py-2.5 text-xs text-white outline-none focus:border-cyan-500"
-            >
-              <option value={1}>Senior Backend Developer (FastAPI/Docker)</option>
-              <option value={2}>Frontend Architect (React/TypeScript)</option>
-            </select>
+            {jobs.length === 0 ? (
+              <p className="text-xs text-slate-500 italic">No jobs available. Create your first job posting to rank candidates.</p>
+            ) : (
+              <select
+                value={selectedJobId || ""}
+                onChange={(e) => setSelectedJobId(Number(e.target.value))}
+                className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3 py-2.5 text-xs text-white outline-none focus:border-cyan-500"
+              >
+                {jobs.map((j) => (
+                  <option key={j.id} value={j.id}>
+                    {j.title} ({j.company})
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
         </Card>
 
@@ -92,8 +118,15 @@ export default function AIRanking() {
                       </td>
                       <td className="py-4 text-right">
                         <Button
-                          onClick={() => {
-                            toast.success(`Shortlist updated for ${cand.name}!`);
+                          onClick={async () => {
+                            if (selectedJobId !== null) {
+                              try {
+                                await shortlistCandidate(cand.id, selectedJobId);
+                                toast.success(`Successfully shortlisted ${cand.name}!`);
+                              } catch {
+                                toast.error("Failed to shortlist candidate.");
+                              }
+                            }
                           }}
                           className="text-[10px] py-1.5 px-4"
                         >

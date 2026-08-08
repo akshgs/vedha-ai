@@ -19,14 +19,15 @@ class JobService:
     ):
         db = self.repository.db
 
-        # ── 1. Self-healing check: Seed realistic demo jobs once if database is empty ──
+        # ── 1. Self-healing check: Seed realistic demo jobs once if database is empty or has only 1 job ──
         from app.models.company_job import CompanyJob
-        if db.query(CompanyJob).count() == 0:
+        if db.query(CompanyJob).count() <= 1:
             self._seed_demo_company_jobs(db)
 
         # ── 2. Get student context ───────────────────────────────────────────────────
         from app.models.profile import Profile
         from app.models.skill import Skill
+        from datetime import datetime
         
         resume = self.repository.get_latest_resume(student_id)
         profile = db.query(Profile).filter(Profile.user_id == student_id).first()
@@ -63,21 +64,66 @@ class JobService:
         is_beginner = len(candidate_skills) == 0
         candidate_skills_list = list(candidate_skills)
 
-        # ── 3. Query all active company jobs ─────────────────────────────────────────
-        jobs = db.query(CompanyJob).filter(CompanyJob.is_active == True).all()
+        # ── 3. Query all active company jobs and scraped jobs ─────────────────────────
+        from app.models.job import Job
+        
+        jobs_company = db.query(CompanyJob).filter(CompanyJob.is_active == True).all()
+        jobs_scraped = db.query(Job).all()
+        
+        all_jobs = []
+        for j in jobs_company:
+            job_skills = [s.strip() for s in j.skills.split(",") if s.strip()] if j.skills else []
+            company_name = j.company.company_name if j.company else "Vedha AI Partner"
+            all_jobs.append({
+                "id": j.id,
+                "is_company_job": True,
+                "title": j.title,
+                "company": company_name,
+                "location": j.location,
+                "description": j.description or "",
+                "skills": job_skills,
+                "salary": j.salary or "Not specified",
+                "job_type": j.employment_type or "Full-time",
+                "experience_level": j.experience_level or "Fresher",
+                "source": "Vedha Recruiter Portal",
+                "url": "",
+                "created_at": j.created_at,
+            })
+            
+        for j in jobs_scraped:
+            job_skills = []
+            if j.skills:
+                try:
+                    job_skills = json.loads(j.skills)
+                except Exception:
+                    job_skills = [s.strip() for s in j.skills.split(",") if s.strip()]
+            all_jobs.append({
+                "id": j.id + 10000,
+                "is_company_job": False,
+                "title": j.title,
+                "company": j.company,
+                "location": j.location,
+                "description": j.description or "",
+                "skills": job_skills,
+                "salary": j.salary or "Not specified",
+                "job_type": j.job_type or "Full-time",
+                "experience_level": "Fresher",
+                "source": j.source or "Remotive",
+                "url": j.url or "",
+                "created_at": j.scraped_at,
+            })
+
         recommendations = []
 
-        for job in jobs:
-            job_title = job.title
-            job_desc = job.description
-            job_skills = []
-            if job.skills:
-                job_skills = [s.strip() for s in job.skills.split(",") if s.strip()]
+        for job in all_jobs:
+            job_title = job["title"]
+            job_desc = job["description"]
+            job_skills = job["skills"]
 
             # If the student is a complete beginner, recommend matching roles with default scores
             if is_beginner:
-                level_lower = (job.experience_level or "").lower()
-                type_lower = (job.employment_type or "").lower()
+                level_lower = (job["experience_level"] or "").lower()
+                type_lower = (job["job_type"] or "").lower()
                 is_beginner_job = (
                     "fresher" in level_lower or
                     "intern" in level_lower or
@@ -93,17 +139,19 @@ class JobService:
                     if "fresher" in level_lower or "intern" in level_lower:
                         default_score += 5.0
 
-                    company_name = job.company.company_name if job.company else "Vedha AI Partner"
                     recommendations.append(
                         {
-                            "id": job.id,
-                            "title": job.title,
-                            "company": company_name,
-                            "location": job.location,
-                            "salary": job.salary,
-                            "job_type": job.employment_type,
-                            "source": "Vedha Recruiter Portal",
-                            "url": "",
+                            "id": job["id"],
+                            "title": job["title"],
+                            "company": job["company"],
+                            "location": job["location"],
+                            "description": job["description"],
+                            "skills": job_skills,
+                            "salary": job["salary"],
+                            "job_type": job["job_type"],
+                            "source": job["source"],
+                            "url": job["url"],
+                            "scraped_at": job["created_at"].isoformat() if job["created_at"] else datetime.utcnow().isoformat(),
                             "match_percent": default_score,
                             "exact_match_score": default_score,
                             "semantic_score": default_score,
@@ -143,17 +191,19 @@ class JobService:
             )
 
             if final_score >= 50.0:
-                company_name = job.company.company_name if job.company else "Vedha AI Partner"
                 recommendations.append(
                     {
-                        "id": job.id,
-                        "title": job.title,
-                        "company": company_name,
-                        "location": job.location,
-                        "salary": job.salary,
-                        "job_type": job.employment_type,
-                        "source": "Vedha Recruiter Portal",
-                        "url": "",
+                        "id": job["id"],
+                        "title": job["title"],
+                        "company": job["company"],
+                        "location": job["location"],
+                        "description": job["description"],
+                        "skills": job_skills,
+                        "salary": job["salary"],
+                        "job_type": job["job_type"],
+                        "source": job["source"],
+                        "url": job["url"],
+                        "scraped_at": job["created_at"].isoformat() if job["created_at"] else datetime.utcnow().isoformat(),
                         "match_percent": final_score,
                         "exact_match_score": result["match_percent"],
                         "semantic_score": semantic_score,
@@ -161,6 +211,7 @@ class JobService:
                         "matched_skills": result["matched_skills"],
                     }
                 )
+
 
         recommendations.sort(
             key=lambda item: item["match_percent"],

@@ -19,6 +19,9 @@ class AuthService:
         if existing:
             raise ValueError("Email already exists.")
 
+        if data.role == "admin":
+            raise ValueError("Administrator accounts cannot be self-registered.")
+
         user = User(
             name=data.name,
             email=data.email,

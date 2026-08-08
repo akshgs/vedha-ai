@@ -1,17 +1,44 @@
-.git
-.venv
-__pycache__
-*.pyc
-node_modules
-dist
-build
-.cache
-.vscode
-.idea
-.coverage
-.pytest_cache
-*.db
-vedha-frontend
+# ── Virtual environment (never goes into the image)
+.venv/
+venv/
+env/
 
-# Legacy archived code — excluded from Docker build
+# ── Python bytecode
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# ── Test / coverage artefacts
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# ── Local development databases (Docker uses PostgreSQL)
+*.db
+*.sqlite3
+
+# ── IDE and OS artefacts
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# ── Build output
+dist/
+build/
+.cache/
+
+# ── Frontend (built separately by vedha-frontend/Dockerfile)
+vedha-frontend/
+
+# ── Legacy archived code — not needed at runtime
 legacy/
+
+# ── Node artefacts (safety exclusion — should not exist here)
+node_modules/
+
+# ── Logs
+*.log

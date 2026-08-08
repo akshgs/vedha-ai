@@ -15,6 +15,9 @@ class SendMessagePayload(BaseModel):
     text: str
     fileUrl: Optional[str] = None
 
+class CreateConversationPayload(BaseModel):
+    recipientId: int
+
 @router.get("/conversations")
 def get_conversations_list(
     current_user = Depends(get_current_user),
@@ -85,6 +88,46 @@ def get_conversations_list(
             "archived": is_archived
         })
     return res
+
+@router.post("/conversations")
+def get_or_create_conversation(
+    payload: CreateConversationPayload,
+    current_user = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    # Check if a conversation already exists
+    conv = db.query(DBConversation).filter(
+        or_(
+            (DBConversation.user1_id == current_user.id) & (DBConversation.user2_id == payload.recipientId),
+            (DBConversation.user1_id == payload.recipientId) & (DBConversation.user2_id == current_user.id)
+        )
+    ).first()
+    
+    if not conv:
+        conv = DBConversation(
+            user1_id=current_user.id,
+            user2_id=payload.recipientId,
+            last_message="Conversation started.",
+            updated_at=datetime.utcnow()
+        )
+        db.add(conv)
+        db.commit()
+        db.refresh(conv)
+        
+        # Add a placeholder/welcome message
+        msg = DirectMessage(
+            conversation_id=conv.id,
+            sender_id=current_user.id,
+            text="Hello! I would love to connect with you for mentorship.",
+            read=False
+        )
+        db.add(msg)
+        db.commit()
+
+    return {
+        "id": f"conv-{conv.id}",
+        "recipientId": str(payload.recipientId)
+    }
 
 @router.get("/conversations/{conversation_id}")
 def get_conversation_messages(

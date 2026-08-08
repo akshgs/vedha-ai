@@ -1,4 +1,4 @@
-# ── Virtualenv and dependencies
+# ── Virtualenv and Python cache
 .venv/
 venv/
 env/
@@ -7,13 +7,25 @@ __pycache__/
 *.pyo
 *.pyd
 
-# ── Node and frontend cache
+# ── Test / coverage artefacts
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# ── Node and frontend build cache
 node_modules/
 dist/
 build/
 .npm/
+.cache/
 
-# ── Credentials & Local settings
+# ── Local development databases
+*.db
+*.sqlite3
+
+# ── Credentials and local settings
 .env
 .env.local
 .env.test
@@ -21,17 +33,28 @@ build/
 *.crt
 *.key
 *.pem
+
+# ── Git and SCM
 .git/
 .gitignore
 .github/
 
-# ── Tests and profiling data
-.pytest_cache/
-.coverage
-htmlcov/
+# ── Logs and profiling
 *.log
-docs/
-brain/
 
-# Legacy archived code — excluded from Docker build context
+# ── OS artefacts
+.DS_Store
+Thumbs.db
+
+# ── IDE
+.vscode/
+.idea/
+
+# ── Docs (not needed in image)
+docs/
+
+# ── Legacy archived code
 vedha_ai/legacy/
+
+# ── ML experiment tracking
+vedha_ai/legacy/mlruns/

@@ -43,7 +43,7 @@ export const PORTAL_CONFIGS: Record<string, PortalConfig> = {
       { title: "Dashboard", path: "/student/dashboard", icon: LayoutDashboard },
       { title: "Learning Academy", path: "/student/learning", icon: BookOpen },
       { title: "Collaboration Feed", path: "/collaboration/feed", icon: Compass },
-      { title: "Mentorship Networks", path: "/collaboration/mentors", icon: Users },
+      { title: "Industry Mentoring", path: "/collaboration/mentors", icon: Users },
       { title: "Direct Messages", path: "/collaboration/messages", icon: MessageSquare },
       { title: "Resume AI", path: "/student/resume", icon: FileText },
       { title: "Skills & Assessment", path: "/student/skills", icon: Star },

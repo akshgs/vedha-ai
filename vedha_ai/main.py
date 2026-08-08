@@ -54,6 +54,8 @@ from app.api.v1.websocket import router as websocket_router
 from app.api.v1.networking import router as networking_router, profiles_router
 from app.api.v1.mentorship import router as mentorship_router
 from app.api.v1.messages import router as messages_router
+from app.api.v1.recruiter import router as recruiter_router
+
 
 
 import asyncio
@@ -199,6 +201,8 @@ app.include_router(networking_router, prefix="/api/v1")
 app.include_router(profiles_router, prefix="/api/v1")
 app.include_router(mentorship_router, prefix="/api/v1")
 app.include_router(messages_router, prefix="/api/v1")
+app.include_router(recruiter_router, prefix="/api/v1")
+
 
 # Notifications
 app.include_router(notifications_router, prefix="/api/v1")

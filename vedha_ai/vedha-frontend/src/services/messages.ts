@@ -81,4 +81,10 @@ export async function searchMessageHistory(query: string): Promise<ChatMessage[]
     ];
   }
 }
+// 6. Create or get conversation with a recipient
+export async function createConversation(recipientId: number): Promise<{ id: string }> {
+  const res = await api.post<{ id: string }>("/messages/conversations", { recipientId });
+  return res.data;
+}
+
 export default getConversations;

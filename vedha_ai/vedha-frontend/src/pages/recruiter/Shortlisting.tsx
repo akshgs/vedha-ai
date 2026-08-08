@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import Card from "@/components/ui/card/Card";
 import Button from "@/components/ui/button/Button";
-import { searchCandidates, type Candidate } from "@/services/recruiter";
+import { getShortlistedCandidates, removeShortlistCandidate, saveShortlistNote, scheduleInterview, type Candidate } from "@/services/recruiter";
 
 export default function Shortlisting() {
   const [shortlisted, setShortlisted] = useState<Candidate[]>([]);
@@ -17,8 +17,15 @@ export default function Shortlisting() {
     async function loadShortlist() {
       try {
         setLoading(true);
-        const data = await searchCandidates("", 88);
+        const data = await getShortlistedCandidates();
         setShortlisted(data);
+        const notesMap: Record<number, string> = {};
+        data.forEach(c => {
+          if (c.notes) {
+            notesMap[c.id] = c.notes;
+          }
+        });
+        setActiveNotes(notesMap);
       } catch {
         toast.error("Failed to load shortlist database.");
       } finally {
@@ -28,14 +35,24 @@ export default function Shortlisting() {
     void loadShortlist();
   }, []);
 
-  function handleSaveNote(id: number, text: string) {
-    setActiveNotes({ ...activeNotes, [id]: text });
-    toast.success("Recruiter comment logs saved successfully!");
+  async function handleSaveNote(id: number, text: string) {
+    try {
+      await saveShortlistNote(id, text);
+      setActiveNotes({ ...activeNotes, [id]: text });
+      toast.success("Recruiter comment logs saved successfully!");
+    } catch {
+      toast.error("Failed to save evaluation comment.");
+    }
   }
 
-  function handleRemove(id: number) {
-    setShortlisted(shortlisted.filter(c => c.id !== id));
-    toast.info("Candidate removed from shortlist registry.");
+  async function handleRemove(id: number) {
+    try {
+      await removeShortlistCandidate(id);
+      setShortlisted(shortlisted.filter(c => c.id !== id));
+      toast.info("Candidate removed from shortlist registry.");
+    } catch {
+      toast.error("Failed to remove candidate from shortlist.");
+    }
   }
 
   return (
@@ -97,8 +114,16 @@ export default function Shortlisting() {
                     Remove Candidate
                   </button>
                   <Button
-                    onClick={() => {
-                      toast.success(`Candidate ${cand.name} promoted to next scheduling slot!`);
+                    onClick={async () => {
+                      try {
+                        const tomorrow = new Date();
+                        tomorrow.setDate(tomorrow.getDate() + 1);
+                        const dateStr = tomorrow.toISOString().split("T")[0];
+                        await scheduleInterview(cand.id, `${dateStr} 10:00 AM`, "Promoted from Shortlist Manager.");
+                        toast.success(`Candidate ${cand.name} promoted to technical interview stage!`);
+                      } catch {
+                        toast.error("Failed to promote candidate.");
+                      }
                     }}
                     className="text-xs py-1.5 px-4 bg-cyan-600 hover:bg-cyan-500 flex items-center gap-1"
                   >

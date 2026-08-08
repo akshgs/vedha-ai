@@ -6,6 +6,7 @@ import { Shield, Bell, Key, Save, RefreshCw } from "lucide-react";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import Button from "@/components/ui/button/Button";
 import { toast } from "sonner";
+import { api } from "@/services/api";
 
 const passwordSchema = z
   .object({
@@ -37,12 +38,15 @@ export default function AdminSettings() {
 
   async function handlePasswordChange(data: PasswordFormData) {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      console.log("Password change requested:", data);
+      await api.put("/auth/password", {
+        currentPassword: data.currentPassword,
+        newPassword: data.newPassword,
+      });
       toast.success("Password updated successfully!");
       reset();
-    } catch {
-      toast.error("Failed to update password.");
+    } catch (err: any) {
+      const msg = err?.response?.data?.detail ?? "Failed to update password.";
+      toast.error(msg);
     }
   }
 

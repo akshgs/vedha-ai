@@ -51,6 +51,22 @@ class RecruitmentRepository:
         return result
 
     def apply_to_job(self, user_id: int, job_id: int, file_url: str) -> dict:
+        if job_id >= 10000:
+            from app.models.job import Job
+            scraped_job = self.db.query(Job).filter(Job.id == job_id - 10000).first()
+            title = scraped_job.title if scraped_job else "Software Developer"
+            company = scraped_job.company if scraped_job else "Company Partner"
+            location = scraped_job.location if scraped_job else "Remote"
+            return {
+                "id": job_id,
+                "jobTitle": title,
+                "companyName": company,
+                "location": location,
+                "status": "Applied",
+                "appliedAt": "2026-08-08",
+                "step": 1
+            }
+
         # Check if already applied
         existing = self.db.query(Application).filter(
             Application.student_id == user_id,

@@ -166,24 +166,51 @@ export default function RegisterForm() {
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        {/* Role Selection Dropdown */}
+        {/* Role Selection Cards */}
         <div className="ve-form-group">
-          <label className="ve-label">
+          <label className="ve-label mb-2 block">
             Register Account As
           </label>
-          <select
-            value={selectedRole}
-            onChange={(e) => selectRole(e.target.value as RegisterFormData["role"])}
-            className="ve-select"
-          >
-            <option value="student">Student / Job Candidate</option>
-            <option value="employee">Industry Professional</option>
-            <option value="mentor">Platform Mentor</option>
-            <option value="recruiter">Corporate Recruiter</option>
-            <option value="company">Corporate Manager</option>
-            <option value="university">University Placement Admin</option>
-            <option value="admin">Platform Administrator</option>
-          </select>
+          <div className="grid grid-cols-1 gap-3">
+            <button
+              type="button"
+              onClick={() => selectRole("student")}
+              className={`flex flex-col text-left p-3.5 rounded-xl border transition cursor-pointer ${
+                selectedRole === "student"
+                  ? "bg-[#3B82F6]/10 border-[#3B82F6] text-white"
+                  : "bg-[#0F172A] border-[#1F2937] hover:border-slate-700 text-[#94A3B8]"
+              }`}
+            >
+              <span className="text-xs font-bold text-white">Student / Job Candidate</span>
+              <span className="text-[10px] text-slate-400 mt-1 leading-relaxed">Build your roadmap, verify technical skills, and apply to job opportunities.</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => selectRole("employee")}
+              className={`flex flex-col text-left p-3.5 rounded-xl border transition cursor-pointer ${
+                selectedRole === "employee"
+                  ? "bg-[#3B82F6]/10 border-[#3B82F6] text-white"
+                  : "bg-[#0F172A] border-[#1F2937] hover:border-slate-700 text-[#94A3B8]"
+              }`}
+            >
+              <span className="text-xs font-bold text-white">Employee / Professional</span>
+              <span className="text-[10px] text-slate-400 mt-1 leading-relaxed">Review candidate resumes, mentor students, and share industry insights.</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => selectRole("company")}
+              className={`flex flex-col text-left p-3.5 rounded-xl border transition cursor-pointer ${
+                selectedRole === "company"
+                  ? "bg-[#3B82F6]/10 border-[#3B82F6] text-white"
+                  : "bg-[#0F172A] border-[#1F2937] hover:border-slate-700 text-[#94A3B8]"
+              }`}
+            >
+              <span className="text-xs font-bold text-white">Company / Recruiter</span>
+              <span className="text-[10px] text-slate-400 mt-1 leading-relaxed">Create job postings, search candidates, and run AI similarity ranking.</span>
+            </button>
+          </div>
         </div>
 
         <div className="ve-form-group">

@@ -41,6 +41,28 @@ from app.models.ecosystem import VerifiedBadge, EcosystemStage
 
 
 def seed_data(db: Session) -> None:
+    # 0. Seed default role-based accounts (only when users table is empty)
+    from app.security.password import hash_password
+
+    default_emails = [
+        "admin@test.com",
+        "student@test.com",
+        "company@test.com",
+        "recruiter@test.com",
+    ]
+    existing_defaults = db.query(User).filter(User.email.in_(default_emails)).count()
+
+    if existing_defaults == 0:
+        default_users = [
+            User(name="Admin User",     email="admin@test.com",     password_hash=hash_password("Admin@123"),     role="admin",     status="active", is_verified=True, onboarding_complete=True),
+            User(name="Student User",   email="student@test.com",   password_hash=hash_password("Student@123"),   role="student",   status="active", is_verified=True, onboarding_complete=True),
+            User(name="Company User",   email="company@test.com",   password_hash=hash_password("Company@123"),   role="company",   status="active", is_verified=True, onboarding_complete=True),
+            User(name="Recruiter User", email="recruiter@test.com", password_hash=hash_password("Recruiter@123"), role="recruiter", status="active", is_verified=True, onboarding_complete=True),
+        ]
+        db.add_all(default_users)
+        db.commit()
+        print("[SEED] Seeded default role-based accounts (admin, student, company, recruiter).")
+
     # 1. Seed Problems
     if db.query(Problem).count() == 0:
         p1 = Problem(

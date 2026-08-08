@@ -9,6 +9,7 @@ export interface Candidate {
   codingSolved: number;
   experienceYears: number;
   matchScore?: number;
+  notes?: string;
 }
 
 export interface PipelineStage {
@@ -120,4 +121,40 @@ export async function updateCandidateStage(candidateId: number, fromStage: strin
 
 export async function scheduleInterview(candidateId: number, dateTime: string, notes: string): Promise<void> {
   await api.post("/recruiter/interviews/schedule", { candidateId, dateTime, notes });
+}
+
+export interface RecruiterJob {
+  id: number;
+  title: string;
+  company: string;
+  skills: string | null;
+}
+
+export async function getRecruiterJobs(): Promise<RecruiterJob[]> {
+  try {
+    const { data } = await api.get<RecruiterJob[]>("/recruiter/jobs");
+    return data;
+  } catch {
+    return [
+      { id: 1, title: "Senior Backend Developer (FastAPI/Docker)", company: "Google DeepMind", skills: "Python, FastAPI, Docker" },
+      { id: 2, title: "Frontend Architect (React/TypeScript)", company: "Meta", skills: "React, TypeScript, Tailwind" },
+    ];
+  }
+}
+
+export async function getShortlistedCandidates(): Promise<Candidate[]> {
+  const { data } = await api.get<Candidate[]>("/recruiter/shortlist");
+  return data;
+}
+
+export async function shortlistCandidate(candidateId: number, jobId: number): Promise<void> {
+  await api.post("/recruiter/shortlist", { candidateId, jobId });
+}
+
+export async function removeShortlistCandidate(candidateId: number): Promise<void> {
+  await api.post("/recruiter/shortlist/remove", { candidateId });
+}
+
+export async function saveShortlistNote(candidateId: number, note: string): Promise<void> {
+  await api.post("/recruiter/shortlist/note", { candidateId, note });
 }

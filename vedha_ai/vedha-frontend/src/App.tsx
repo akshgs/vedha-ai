@@ -79,6 +79,7 @@ const RecruiterShortlist = lazy(() => import("@/pages/recruiter/Shortlisting"));
 const RecruiterScheduling = lazy(() => import("@/pages/recruiter/InterviewScheduling"));
 const RecruiterPipeline = lazy(() => import("@/pages/recruiter/HiringPipeline"));
 const RecruiterAnalytics = lazy(() => import("@/pages/recruiter/Analytics"));
+const RecruiterSettings = lazy(() => import("@/pages/recruiter/Settings"));
 
 // Company Pages
 const CompanyDashboard = lazy(() => import("@/pages/company/Dashboard"));
@@ -558,6 +559,14 @@ export default function App() {
               element={
                 <ProtectedRoute role="recruiter">
                   <RecruiterAnalytics />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/recruiter/settings"
+              element={
+                <ProtectedRoute role="recruiter">
+                  <RecruiterSettings />
                 </ProtectedRoute>
               }
             />

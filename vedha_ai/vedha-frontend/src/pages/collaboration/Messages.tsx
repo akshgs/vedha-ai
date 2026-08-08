@@ -25,7 +25,13 @@ export default function Messages() {
         setLoading(true);
         const data = await getConversations();
         setConversations(data);
-        if (data.length > 0) {
+        
+        const params = new URLSearchParams(window.location.search);
+        const queryConvId = params.get("conversationId");
+        
+        if (queryConvId && data.some(c => c.id === queryConvId)) {
+          setSelectedConversationId(queryConvId);
+        } else if (data.length > 0) {
           setSelectedConversationId(data[0].id);
         }
       } catch {

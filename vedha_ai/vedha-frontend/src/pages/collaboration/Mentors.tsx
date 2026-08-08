@@ -17,6 +17,7 @@ import {
   type BookingSlot,
   type MentorshipSession,
 } from "@/services/mentorship";
+import { createConversation } from "@/services/messages";
 
 import PageHeader from "@/components/ui/layout/PageHeader";
 
@@ -92,8 +93,8 @@ export default function Mentors() {
       <div className="mx-auto max-w-7xl space-y-8">
         
         <PageHeader
-          title="Vedha Mentorship Network"
-          subtitle="Schedule 1-on-1 consultations with verified experts to discuss roadmaps, review code, or request mock reviews."
+          title="Industry Mentoring"
+          subtitle="Connect with experienced professionals who can help you learn, prepare for interviews, and navigate your career."
           action={
             <div className="flex rounded-xl bg-slate-900/60 p-1 border border-slate-800">
               <button
@@ -153,7 +154,15 @@ export default function Mentors() {
                       skills={mentor.skills}
                       bio={mentor.bio}
                       onBook={() => handleSelectMentor(mentor)}
-                      onChat={() => navigate("/collaboration/messages")}
+                      onChat={async () => {
+                        try {
+                          const recipientId = Number(mentor.id.replace("mentor-", ""));
+                          const conv = await createConversation(recipientId);
+                          navigate(`/collaboration/messages?conversationId=${conv.id}`);
+                        } catch {
+                          toast.error("Failed to initialize mentor chat session.");
+                        }
+                      }}
                     />
                   ))}
               </div>
